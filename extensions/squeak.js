@@ -404,11 +404,11 @@ async function runHeadless(imageUrl) {
 async function setupTHREEJS() {
   console.log("SETUP");
   window.THREE = await import(
-    "https://unpkg.com/three@0.160.0/build/three.module.js"
+    "https://unpkg.com/three/build/three.module.js"
   );
   window.VRButton = (
     await import(
-      "https://unpkg.com/three@0.160.0/examples/jsm/webxr/VRButton.js"
+      "https://unpkg.com/three/examples/jsm/webxr/VRButton.js"
     )
   ).VRButton;
   window.Scene = THREE.Scene;
@@ -423,32 +423,65 @@ async function setupTHREEJS() {
   window.Quaternion = THREE.Quaternion;
   window.Matrix4 = THREE.Matrix4;
   window.Color = THREE.Color;
+  window.DirectionalLight = THREE.DirectionalLight;
+  window.AmbientLight = THREE.AmbientLight;
+  window.MeshLambertMaterial = THREE.MeshLambertMaterial;
 
   console.log(
     await sqEval(`
-    | cam scene renderer geometry material cube block |
-    cam := JS PerspectiveCamera new: 75 aspect: JS window innerWidth asFloat / JS window innerHeight near: 0.1 far: 1000.
+    | cam scene renderer cube block bgCol light resize now |
     scene := JS Scene new.
-    renderer := JS WebGLRenderer new.
-    renderer xr enabled: true.
-  
-    JS window document body appendChild: renderer domElement.
+    scene background: (JS Color new: 16r505050).
 
-    geometry := JS BoxGeometry new: 1 y: 1 z: 1.
-    material := JS MeshBasicMaterial new: ({#color -> 16r00ff00} as: Dictionary).
-    cube := JS Mesh new: geometry material: material.
+    cam := JS PerspectiveCamera
+      new: 50
+      aspect: (JS window innerWidth / JS window innerHeight) asFloat
+      near: 0.1
+      far: 100.
+    cam position set: 0 y: 1.6 z: 3.
+    scene add: cam.
+
+    light := JS DirectionalLight new: 16rffffff intensity: 0.5.
+    light position
+      set: 1 y: 1 z: 1;
+      normalize.
+    scene add: light.
+    scene add: (JS AmbientLight new: 16rffffff intensity: 0.5).
+
+    cube := JS Mesh
+      new: (JS BoxGeometry new: 1 y: 1 z: 1)
+      material: (JS MeshLambertMaterial new: ({#color -> 16rff0000} as: Dictionary)).
+    cube position set: 0 y: 1.5 z: -10.
     scene add: cube.
 
-    cam position z: 5.
-
+    renderer := JS WebGLRenderer new: ({#antialias -> true} as: Dictionary).
+    renderer
+      setPixelRatio: JS window devicePixelRatio;
+      setSize: (JS window innerWidth / JS window innerHeight) asFloat.
+    renderer xr enabled: true.
+    now := Time now asString.
+    renderer setAnimationLoop: [:time |
+      "Transcript showln: 'now: ', now."
+      cube rotation y: time / 1000.
+      renderer render: scene camera: cam].
+    
+    JS window document body appendChild: renderer domElement.
     JS window document body appendChild: (JS VRButton createButton: renderer).
 
-    renderer setAnimationLoop: [
-      cam position y: cam position y + 0.01.
-      renderer render: scene camera: cam].
+    resize := [
+        cam aspect: (JS window innerWidth / JS window innerHeight) asFloat.
+        cam updateProjectionMatrix.
+        renderer setSize: JS window innerWidth height: JS window innerHeight].
+    resize value.
+    JS window
+      addEventListener: 'resize'
+      do: resize
+      useCapture: false.
     `)
   );
   console.log("SETUP");
 }
+
+console.log("hello")
 
 await setupTHREEJS();
