@@ -176,11 +176,14 @@ export class SqueakProject extends Project {
             webClientFactory: (MessageSend receiver: YarosJSWebClient selector: #new));
         yourself).
       Yaros2 start.
+      "Yaros2 debugLog: Transcript."
       Transcript showln: 'Started ' , Yaros2.
       JS Promise new: [:startResolve :startReject |
         [[| remoteCompiler |
         remoteCompiler := Yaros2 remoteObjectNamed: #Compiler.
         Transcript showln: 'yaros: found remote compiler'.
+        (Yaros2 remoteObjectNamed: #Smalltalk) at: #JS put: JS.
+        Transcript showln: 'yaros: installed JS bindings'.
         startResolve call: nil with:
           (JS window at: #sqEval put: [:text |
             JS Promise new: [:resolve :reject |
@@ -217,8 +220,12 @@ function saveString(s) {
   return `(Json readFrom: '${s}' readStream) withSqueakLineEndings`;
 }
 
-async function sqCompile(cls, source) {
-  await sqEval(`${cls} compile: ${saveString(source)}`);
+async function sqCompile(cls, source, anEval = sqEval) {
+  return await sqCompileAll([[cls, source]], anEval);
+}
+
+async function sqCompileAll(classesAndSources, anEval = sqEval) {
+  await anEval(classesAndSources.map(([cls, source]) => `${cls} compile: ${saveString(source)}`).join(". "));
 }
 
 let systemChangeSubscribers = [];
@@ -227,62 +234,175 @@ async function ensureSystemChangeCallback() {
   if (!systemChangeCallbackInit) {
     systemChangeCallbackInit = true;
 
-    // FIXME temporarily disabled, rpc does not support it
-    if (false)
-      await sqEval(`SystemChangeNotifier uniqueInstance
-      notify: JS window
-      ofAllSystemChangesUsing: #sqSystemChangeCallback:`);
-
-    const SQUEAK_JS_HACKS = false;
+    const SQUEAK_JS_HACKS = false; // true;
     if (SQUEAK_JS_HACKS) {
-      await sqCompile(
-        "Behavior",
-        `asJSArgument
-        ^ {#name -> self name}`
-      );
-      await sqCompile(
-        "AbstractEvent",
-        `asJSArgument
-        ^ (self class allInstVarNames collect: [:n | n asJSArgument -> (self instVarNamed: n) asJSArgument]),
-          {#class -> self className}`
-      );
-      await sqCompile(
-        "Character",
-        // in this version, we are unloading the charset
-        `canBeGlobalVarInitial ^ self isUppercase`
-      );
-      await sqCompile(
-        "CompiledMethod",
-        `asJSArgument
-        ^ {#selector -> self selector. #class -> self methodClass asJSArgument}`
-      );
-      // FIXME hacks to better understand what errors are triggering
-      await sqCompile(
-        "Parser",
-        `notify: string at: location self error: string, '' '', source contents`
-      );
-      await sqCompile(
-        "JSObjectProxy class",
-        `handleCallback
-	| block args result |
-	block := self primGetActiveCallbackBlock.
-	args := self primGetActiveCallbackArgs.
-	[result := block valueWithArguments: args]
-		on: Error do: [:err | | messageStream ctx i |
-			messageStream := WriteStream on: (String new: 1500).
-      messageStream nextPutAll: err asString; cr; cr.
+      await sqCompileAll([
+        // 1. Copied from JSBridge-Core
+        ["Boolean", `asJSArgument
+        ^ self`],
+        ["Collection", `asJSArgument
+        "converted to JS array by plugin"
+        | array i |
+        array := Array new: self size.
+        i := 0.
+        self do: [:each | array at: (i := i + 1) put: each asJSArgument].
+        ^ array`],
+        ["Dictionary", `asJSArgument
+        "converted to JS object by plugin"
+        | assocs i |
+        assocs := Array new: self size.
+        i := 0.
+        self associationsDo: [:a |
+          assocs at: (i := i + 1) put: a key asJSArgument -> a value asJSArgument].
+        ^ assocs`],
+        ["Float", `asJSArgument
+        ^ self`],
+        ["Object", `asJSArgument
+        self error: 'Cannot convert ', self class name, ' to JavaScript'.`],
+        ["SmallInteger", `asJSArgument
+        "converted to JS number by plugin"
+        ^self`],
+        ["String", `asJSArgument
+        "converted to JS string by plugin"
+        self class isBytes ifTrue: [^self].
+        ^super asJSArgument`],
+        ["UndefinedObject", `asJSArgument
+        "converted to JS null by plugin"
+        ^self`],
 
-			i := 0.
-			ctx := err signalerContext.
-			[ctx notNil and: [i < 6]] whileTrue: [
-				ctx printDetails: messageStream.
-				messageStream cr.
-				i := i + 1.
-				ctx := ctx sender].
-			result := JS Error: "err asString" messageStream contents withUnixLineEndings squeakToUtf8].
-	self primReturnFromCallback: result.`
-      );
+        // 2. More conversions for this domain
+        ["AbstractEvent", `asJSArgument
+        ^ (self class allInstVarNames collect: [:n | n asJSArgument -> (self instVarNamed: n) asJSArgument]),
+          {#class -> self className}`],
+        ["Behavior", `asJSArgument
+        ^ {#name -> self name}`],
+        ["CompiledMethod", `asJSArgument
+        ^ {#selector -> self selector. #class -> self methodClass asJSArgument}`],
+        /* ["Object", `asJSArgument
+        ^ self printString asJSArgument`], */
+
+        // 3. Other hacks
+        ["Character", `canBeGlobalVarInitial
+        "in this version, we are unloading the charset"
+        ^ self isUppercase`],
+
+        // DEBUG
+        ["Association", `asJSArgument
+        "converted to JS array by plugin"
+        ^self`],
+      ]);
+
+      await sqCompileAll([
+        // FIXME invalid syntax, what is the intent?
+        /* // FIXME hacks to better understand what errors are triggering
+        ["Parser", `notify: string at: location
+        self error: string, '' '', source contents`], */
+        ["JSObjectProxy class", `handleCallback
+        | block args result |
+        block := self primGetActiveCallbackBlock.
+        args := self primGetActiveCallbackArgs.
+        [result := block valueWithArguments: args]
+          on: Error do: [:err | | messageStream ctx i |
+            messageStream := WriteStream on: (String new: 1500).
+            messageStream nextPutAll: err asString; cr; cr.
+
+            i := 0.
+            ctx := err signalerContext.
+            [ctx notNil and: [i < 6]] whileTrue: [
+              ctx printDetails: messageStream.
+              messageStream cr.
+              i := i + 1.
+              ctx := ctx sender].
+            result := JS Error: "err asString" messageStream contents withUnixLineEndings squeakToUtf8].
+        self primReturnFromCallback: result.`],
+
+        // DEBUG
+        ["JSObjectProxy", `with: argument retry: retryBlock
+        | error |
+        (error := self primGetError) ifNil: [^ self error: 'JSBridge error'].
+        (error beginsWith: 'asJSArgument') ifTrue: [
+          "<-- Yaros proxies"
+          Transcript showln: 'Yaros proxy error asJSArgument on ', argument class , ' isProxy: ' , argument isProxy asString.
+          "argument isProxy ifTrue: [^retryBlock value: argument resolveProxyArray].
+          argument isCollection ifTrue: [
+            Transcript showln: 'argument: ', (argument collect: [:arg | arg class]).
+            argument withIndexDo: [:ea :index |
+              Transcript showln: 'argument ', index , ': ' , ea class.
+              ea isProxy ifTrue: [
+                (ea isArray and: [ea isString not]) ifTrue: [
+                  ^retryBlock value: (argument copy at: index put: ea resolveProxyArray; yourself)]].
+              ea isArray ifTrue: [
+                ea withIndexDo: [:eb :jndex |
+                  Transcript showln: 'argument ', index , ' at ' , jndex , ': ' , eb class.
+                  (eb isProxy and: [(eb perform: #class) name = Association name]) ifTrue: [
+                    ^retryBlock value: (argument copy at: index put: (ea copy at: jndex put: eb key -> eb value; yourself); yourself)].
+                  Transcript showln: 'argument ', index , ' at ' , jndex , ': ' , eb key class , ' -> ' , eb value class]]]]."
+          argument isProxy ifTrue: [^retryBlock value: argument resolveProxyJSArgument].
+          Transcript showln: 'argument: ', (argument collect: [:ea | ea class]).
+          "<--"
+          ^retryBlock value: argument asJSArgument].
+        (error beginsWith: 'CallbackSemaphore') ifTrue: [
+          self class initCallbacks.
+          ^retryBlock value: argument].
+        self error: error.`],
+        ["Association", `asJSArgument
+        "converted to JS array by plugin"
+        ^self`],
+      ], sqEvalBrowser ?? sqEval);
+
+      await Promise.all((sqEvalBrowser ? [sqEval, sqEvalBrowser] : [sqEval]).map(eachEval =>
+        sqCompileAll([
+          ["Object", `resolveProxyJSArgument
+
+          ^ self error: 'Cannot convert ', self class name, ' to JavaScript'`],
+          ["Collection", `resolveProxyJSArgument
+
+          ^ (Array new: self size)
+            fillFrom: self with: [:ea |
+              ea isProxy
+                ifTrue: [ea resolveProxyJSArgument]
+                ifFalse: [ea]]`],
+          ["Dictionary", `resolveProxyJSArgument
+
+          | result |
+          result := Dictionary new: self size.
+          self keysAndValuesDo: [:key :value |
+            result
+              at: (key isProxy ifTrue: [key resolveProxyJSArgument] ifFalse: [key])
+              put: (value isProxy ifTrue: [value resolveProxyJSArgument] ifFalse: [value])].
+          ^ result`],
+          ["YarosRemoteObject", `resolveProxyJSArgument
+
+          self isCollection ifFalse:
+            [^ super resolveProxyJSArgument].
+          self isDictionary ifFalse:
+            [| result |
+            result := Dictionary new: self size.
+            self keysAndValuesDo: [:key :value |
+              result
+                at: (key isProxy ifTrue: [key resolveProxyJSArgument] ifFalse: [key])
+                put: (value isProxy ifTrue: [value resolveProxyJSArgument] ifFalse: [value])].
+            ^ result].
+          ^ (Array new: self size)
+            fillFrom: self with: [:ea |
+              ea isProxy
+                ifTrue: [ea resolveProxyJSArgument]
+                ifFalse: [ea]]`],
+        ], eachEval)));
     }
+
+    // FIXME
+    /* if (await sqEval(`
+      (Smalltalk at: #JS ifAbsent: [nil]) ifNil:
+        [Transcript showln: 'JS bindings not available, system change tracking disabled'.
+        ^ false].
+      SystemChangeNotifier uniqueInstance halt
+        notify: JS window
+        ofAllSystemChangesUsing: #sqSystemChangeCallback:.
+      ^ true
+    `)) {
+      console.log("System change tracking enabled");
+    } */
   }
 }
 window.sqSystemChangeCallback = function (e) {
