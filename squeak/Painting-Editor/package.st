@@ -1,4 +1,4 @@
 Package {
-	#'squeak_changestamp' : true,
-	#name : #'Painting-Editor'
+	#name : #'Painting-Editor',
+	#'squeak_changestamp' : true
 }

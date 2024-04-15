@@ -116,6 +116,16 @@ PEditScript >> removeDo: aBlock [
 ]
 
 {
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/15/2024 14:34'
+}
+PEditScript >> undo [
+
+	posBuf do: #undo.
+	negBuf do: #undo
+]
+
+{
 	#category : #operations,
 	#'squeak_changestamp' : 'tobe 4/13/2024 13:46'
 }

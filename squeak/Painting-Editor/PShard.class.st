@@ -56,18 +56,36 @@ PShard >> allVisibleNodesDo: aBlock [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 11:04'
+	#'squeak_changestamp' : 'tobe 4/15/2024 14:42'
 }
 PShard >> applyChanges: aCollection editScript: aScript [
+
+	self basicApplyChanges: aCollection editScript: aScript.
+	
+	self updateReplacementsFor: aScript
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/15/2024 14:54'
+}
+PShard >> applyRejectedChanges: aCollection [
+
+	self basicApplyChanges: aCollection editScript: nil
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/15/2024 14:42'
+}
+PShard >> basicApplyChanges: aCollection editScript: aScript [
 
 	(aCollection reject: [:change | change sourceShard = self]) do: [:change |
 		view handleEdit: [
 			view
 				selectInvisiblyFrom: (self adjustGlobalIndex: change from) + 1
 					to: (self adjustGlobalIndex: change to);
-				replaceSelectionWith: (change insert ifNil: [''])]].
-	
-	self updateReplacementsFor: aScript
+				replaceSelectionWith: (change insert ifNil: [''])]]
 ]
 
 {
@@ -302,10 +320,12 @@ PShard >> replacements [
 
 {
 	#category : #replacements,
-	#'squeak_changestamp' : 'tobe 4/15/2024 10:41'
+	#'squeak_changestamp' : 'tobe 4/15/2024 14:26'
 }
 PShard >> uninstallReplacement: aReplacement [
 
+	aReplacement beforeUninstall.
+	
 	replacements remove: aReplacement
 ]
 

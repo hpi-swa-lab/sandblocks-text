@@ -58,9 +58,9 @@ PAttachOp >> parent [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/13/2024 13:40'
+	#'squeak_changestamp' : 'tobe 4/15/2024 14:35'
 }
 PAttachOp >> undo [
 
-	node delete
+	node baseRemoveFromParent
 ]

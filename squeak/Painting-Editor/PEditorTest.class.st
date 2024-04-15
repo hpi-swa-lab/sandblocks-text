@@ -60,6 +60,26 @@ PEditorTest >> testApplyChangeInReplacementRemovesIt [
 
 {
 	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/15/2024 14:47'
+}
+PEditorTest >> testApplyRejectedChange [
+
+	| e |
+	e := PEditorState new.
+	e registerValidation: [:root :change :diff | false].
+	e sourceString: '123'.
+	
+	e applyChanges: {PChange range: (0 to: 0) insert: 'a'}.
+	self assert: 'a123' equals: e rootShard view text string.
+	self assert: '123' equals: e sourceString.
+	
+	e applyPendingChanges.
+	self assert: 'a123' equals: e rootShard view text string.
+	self assert: 'a123' equals: e sourceString
+]
+
+{
+	#category : #'as yet unclassified',
 	#'squeak_changestamp' : 'tobe 4/15/2024 11:17'
 }
 PEditorTest >> testBackspaceIntoReplacementCharacter [
@@ -216,6 +236,42 @@ PEditorTest >> testOverlappingReplacements [
 	
 	self assert: 1 equals: e rootShard replacements size.
 	self assert: Character startOfHeader asString equals: e rootShard view text string
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/15/2024 14:55'
+}
+PEditorTest >> testRejectChange [
+
+	| e |
+	e := PEditorState new.
+	e registerValidation: [:root :change :diff | false].
+	e sourceString: '123'.
+	
+	e applyChanges: {PChange range: (0 to: 0) insert: 'a'}.
+	self assert: 'a123' equals: e rootShard view text string.
+	self assert: '123' equals: e sourceString
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/15/2024 14:56'
+}
+PEditorTest >> testRevertRejectedChange [
+
+	| e |
+	e := PEditorState new.
+	e registerValidation: [:root :change :diff | false].
+	e sourceString: '123'.
+	
+	e applyChanges: {PChange range: (0 to: 0) insert: 'a'}.
+	self assert: 'a123' equals: e rootShard view text string.
+	self assert: '123' equals: e sourceString.
+	
+	e revertPendingChanges.
+	self assert: '123' equals: e rootShard view text string.
+	self assert: '123' equals: e sourceString
 ]
 
 {
