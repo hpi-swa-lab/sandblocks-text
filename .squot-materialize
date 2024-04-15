@@ -7,5 +7,21 @@ OrderedCollection [
 			'sandblocks',
 			'oRAGle'
 		]
+	},
+	SquotTonelMapper {
+		#package : MCPackage {
+			#name : 'Painting-Editor'
+		},
+		#path : FSAbsolutePath [
+			'squeak'
+		]
+	},
+	SquotTonelMapper {
+		#package : MCPackage {
+			#name : 'Painting-Diff'
+		},
+		#path : FSAbsolutePath [
+			'squeak'
+		]
 	}
 ]
