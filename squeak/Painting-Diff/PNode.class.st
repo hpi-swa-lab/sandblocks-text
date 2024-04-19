@@ -1407,9 +1407,13 @@ PNode >> adaptInput: input in: source at: cursorIndex textMorph: textMorph event
 	^ input
 ]
 
-{ #category : #'base accessing' }
+{
+	#category : #'base accessing',
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:53'
+}
 PNode >> addBaseChild: aNode at: aNumber [
 
+	aNode baseParent ifNotNil: [aNode baseRemoveFromParent].
 	self baseChildren add: aNode beforeIndex: aNumber.
 	aNode baseParent: self
 ]
@@ -1516,6 +1520,15 @@ PNode >> allVisibleNodesDo: aBlock hidden: aCollection [
 	(aCollection includes: self) ifFalse: [
 		self baseChildren do: [:c | c allVisibleNodesDo: aBlock hidden: aCollection].
 		aBlock value: self]
+]
+
+{
+	#category : #'base accessing',
+	#'squeak_changestamp' : 'tobe 4/19/2024 18:18'
+}
+PNode >> appendBaseChild: aNode [
+
+	self addBaseChild: aNode at: self baseChildren size + 1
 ]
 
 { #category : #'as yet unclassified' }
@@ -3060,12 +3073,15 @@ PNode >> source [
 
 {
 	#category : #accessing,
-	#'squeak_changestamp' : 'tobe 4/15/2024 13:59'
+	#'squeak_changestamp' : 'tobe 4/19/2024 18:13'
 }
 PNode >> sourceString [
 
+	| root |
 	tsSource ifNotNil: [^ tsSource].
-	^ self rootBlock sourceString
+	root := self rootBlock.
+	self assert: root ~= self.
+	^ root sourceString
 		copyFrom: self range first + 1
 		to: self range last
 ]

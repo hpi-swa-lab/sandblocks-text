@@ -7,7 +7,8 @@ Class {
 		'editor',
 		'extensions',
 		'replacements',
-		'lastActualSourceString'
+		'lastActualSourceString',
+		'attributes'
 	],
 	#category : #'Painting-Editor'
 }
@@ -56,30 +57,37 @@ PShard >> allVisibleNodesDo: aBlock [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:42'
+	#'squeak_changestamp' : 'tobe 4/16/2024 06:56'
 }
 PShard >> applyChanges: aCollection editScript: aScript [
 
-	self basicApplyChanges: aCollection editScript: aScript.
+	SBVariant
+		named: 'basicApplyChanges:editScript:'
+		associations: {'with' -> [self basicApplyChanges: aCollection editScript: aScript]. 'without' -> []}
+		activeIndex: 2
+		id: 'f68c7837-9e18-4cb2-aa11-bff64362b962'
+		isActive: true.
 	
-	self updateReplacementsFor: aScript
+	self updateReplacementsFor: aScript.
+	self updateText
 ]
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:54'
+	#'squeak_changestamp' : 'tobe 4/16/2024 07:45'
 }
 PShard >> applyRejectedChanges: aCollection [
 
-	self basicApplyChanges: aCollection editScript: nil
+	self updateText
 ]
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:42'
+	#'squeak_changestamp' : 'tobe 4/15/2024 16:17'
 }
 PShard >> basicApplyChanges: aCollection editScript: aScript [
 
+	self halt.
 	(aCollection reject: [:change | change sourceShard = self]) do: [:change |
 		view handleEdit: [
 			view
@@ -184,13 +192,14 @@ PShard >> findDiff: aString b: anotherString preferredPos: myPreferredPos prefer
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:01'
+	#'squeak_changestamp' : 'tobe 4/17/2024 09:52'
 }
 PShard >> initialize [
 
 	super initialize.
 	
 	replacements := SortedCollection sortBlock: [:a :b | a range first < b range first].
+	attributes := OrderedCollection new.
 	extensions := [{}].
 	
 	self
@@ -239,6 +248,19 @@ PShard >> isShowing: aNode [
 ]
 
 {
+	#category : #replacements,
+	#'squeak_changestamp' : 'tobe 4/15/2024 16:56'
+}
+PShard >> isShowingIndex: aNumber [
+
+	(self range includes: aNumber) ifFalse: [^ false].
+	
+	self replacements do: [:r | (r range containsIndex: aNumber) ifTrue: [^ false]].
+	
+	^ true
+]
+
+{
 	#category : #'as yet unclassified',
 	#'squeak_changestamp' : 'tobe 4/13/2024 08:10'
 }
@@ -266,7 +288,7 @@ PShard >> nodes: aCollection [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 11:16'
+	#'squeak_changestamp' : 'tobe 4/17/2024 08:32'
 }
 PShard >> onChange: aNewString [
 
@@ -281,23 +303,25 @@ PShard >> onChange: aNewString [
 		ifTrue: [ | replacement |
 			replacement := self replacementForStartIndex: (self adjustLocalIndex: (change at: #from) - 1).
 			self editor applyChanges: {
-				(PChange range: (replacement range last - 1 to: replacement range last) insert: '') sourceShard: self}]
+				(PChange range: (replacement range last - 1 to: replacement range last) insert: '')
+					sourceShard: self;
+					sideAffinity: ((change at: #from) = 1 ifTrue: [1] ifFalse: [-1])}]
 		ifFalse: [
 			self editor applyChanges: {
 				(PChange
 					range: ((self adjustLocalIndex: (change at: #from) - 1) to: (self adjustLocalIndex: (change at: #to) - 1))
-					insert: (change at: #insert ifAbsent: ['']) string) sourceShard: self}].
-	
-	
+					insert: (change at: #insert ifAbsent: ['']) string)
+					sourceShard: self;
+					sideAffinity: ((self isShowingIndex: (change at: #from) - 1) ifTrue: [-1] ifFalse: [1])}]
 ]
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/12/2024 10:53'
+	#'squeak_changestamp' : 'tobe 4/16/2024 07:51'
 }
 PShard >> range [
 
-	^ self nodes first range first to: self nodes last range last
+	^ self editor adjustRange: (SBTSRange indexStart: self nodes first range first end: self nodes last range last)
 ]
 
 {
@@ -319,8 +343,29 @@ PShard >> replacements [
 ]
 
 {
+	#category : #'marker api',
+	#'squeak_changestamp' : 'tobe 4/17/2024 11:49'
+}
+PShard >> styleAdd: anAttribute for: aNode definition: aDefinition [
+
+	^ attributes add: (PMarker new
+		definition: aDefinition;
+		node: aNode;
+		attribute: anAttribute)
+]
+
+{
+	#category : #'marker api',
+	#'squeak_changestamp' : 'tobe 4/17/2024 11:49'
+}
+PShard >> styleRemove: aMarker [
+
+	attributes remove: aMarker
+]
+
+{
 	#category : #replacements,
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:26'
+	#'squeak_changestamp' : 'tobe 4/15/2024 16:16'
 }
 PShard >> uninstallReplacement: aReplacement [
 
@@ -331,14 +376,15 @@ PShard >> uninstallReplacement: aReplacement [
 
 {
 	#category : #replacements,
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:11'
+	#'squeak_changestamp' : 'tobe 4/17/2024 11:52'
 }
 PShard >> updateReplacementsFor: anEditScript [
 
 	anEditScript removeDo: [:op |
 		self replacements
 			detect: [:r | op node = r node]
-			ifFound: [:r | self uninstallReplacement: r]].
+			ifFound: [:r | self uninstallReplacement: r].
+		attributes do: [:attr | op node = attr node ifTrue: [attr definition detach value: self value: op node value: attr]]].
 	
 	extensions value do: [:ext |
 		ext replacementDefinitions do: [:def |
@@ -349,17 +395,60 @@ PShard >> updateReplacementsFor: anEditScript [
 					ifFound: [:r | matches ifFalse: [self uninstallReplacement: r]]
 					ifNone: [matches ifTrue: [self installReplacement: def for: node]]]]].
 	
-	self updateText
+	extensions value do: [:ext |
+		ext markerDefinitions do: [:def |
+			self allVisibleNodesDo: [:node | | matches |
+				matches := (DCQuery script: def query with: node) notNil.
+				attributes
+					detect: [:attr | attr definition name = def name and: [node = attr node]]
+					ifFound: [:attr | matches ifFalse: [def detach value: self value: node value: attr]]
+					ifNone: [matches ifTrue: [def attach value: self value: node]]]]]
 ]
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 11:05'
+	#'squeak_changestamp' : 'tobe 4/17/2024 11:55'
 }
 PShard >> updateText [
 
-	| out |
+	| out myRange |
 	out := (self nodes inject: '' into: [:text :node | text, node sourceString]) asText.
+	
+	self editor pendingChanges withIndexDo: [:change :index |
+		myRange := SBTSRange
+			indexStart: (self editor
+				adjustIndex: self nodes first range first
+				forChangeList: self editor pendingChanges
+				upTo: index - 1
+				sideAffinity: 1)
+			end: (self editor
+				adjustIndex: self nodes last range last
+				forChangeList: self editor pendingChanges
+				upTo: index - 1
+				sideAffinity: -1).
+		
+		" TODO: show subrange if intersects "
+		(myRange includesChange: change) ifTrue: [
+			self
+				updateText: out
+				replaceFrom: change from - myRange first + 1
+				to: change to - myRange first
+				with: change insert]].
+	
+	myRange := SBTSRange
+		indexStart: (self editor
+			adjustIndex: self nodes first range first
+			forChangeList: self editor pendingChanges
+			sideAffinity: 1)
+		end: (self editor
+			adjustIndex: self nodes last range last
+			forChangeList: self editor pendingChanges
+			sideAffinity: -1).
+	attributes do: [:marker |
+		out
+			addAttribute: marker attribute
+			from: marker node range first - myRange first + 1
+			to: marker node range last - myRange first].
 	
 	replacements do: [:r |
 		r localRangeIn: self do: [:from :to |
@@ -369,8 +458,20 @@ PShard >> updateText [
 				with: (Text string: Character startOfHeader asString attribute: r asTextAnchor)]].
 	
 	view setText: out.
-	
 	lastActualSourceString := out string
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 09:44'
+}
+PShard >> updateText: aText replaceFrom: aNumber to: anotherNumber with: aStringOrNil [
+
+	aNumber <= aText size
+		ifTrue: [aText replaceFrom: aNumber to: anotherNumber with: (aStringOrNil ifNil: [''])]
+		ifFalse: [
+			self assert: (aNumber = (aText size + 1) and: [anotherNumber = (aText size)]).
+			aText append: (aStringOrNil ifNil: [''])]
 ]
 
 {

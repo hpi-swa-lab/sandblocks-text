@@ -14,6 +14,45 @@ Class {
 }
 
 {
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:30'
+}
+PEditorState >> adjustIndex: aNumber forChangeList: aCollection sideAffinity: anotherNumber [
+
+	^ self
+		adjustIndex: aNumber
+		forChangeList: aCollection
+		upTo: aCollection size
+		sideAffinity: anotherNumber
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:32'
+}
+PEditorState >> adjustIndex: aNumber forChangeList: aCollection upTo: anotherNumber sideAffinity: aThirdNumber [
+
+	| index |
+	index := aNumber.
+	aCollection
+		from: 1
+		to: anotherNumber
+		do: [:change | (((change sideAffinity = aThirdNumber or: [aThirdNumber = 0]) and: [index >= change from]) or: [change sideAffinity ~= aThirdNumber and: [index > change from]]) ifTrue: [index := index + ((change insert ifNil: ['']) size - ((index clampLow: change from high: change to) - change from))]].
+	^ index
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:31'
+}
+PEditorState >> adjustRange: aRange [
+
+	^ SBTSRange
+		indexStart: (self adjustIndex: aRange first forChangeList: self pendingChanges sideAffinity: 1)
+		end: (self adjustIndex: aRange last forChangeList: self pendingChanges sideAffinity: -1)
+]
+
+{
 	#category : #changes,
 	#'squeak_changestamp' : 'tobe 4/15/2024 14:35'
 }
@@ -24,29 +63,31 @@ PEditorState >> applyChanges: aCollection [
 
 {
 	#category : #changes,
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:56'
+	#'squeak_changestamp' : 'tobe 4/19/2024 18:14'
 }
 PEditorState >> applyChanges: aCollection force: aBoolean [
 
-	| newSourceString oldTree newTree pair script |
+	| newSourceString oldTree newTree pair script oldSourceString |
 	newSourceString := aCollection, pendingChanges
 		inject: self sourceString
 		into: [:new :change | change applyTo: new].
+	oldSourceString := node sourceString.
 	oldTree := node.
-	newTree := PNode parse: newSourceString old: oldTree language: oldTree language.
+	newTree := "PNode parse: newSourceString old: oldTree language: oldTree language"PWhitespaceParser parse: newSourceString old: oldTree.
 	oldTree allBaseChildrenDo: [:m | m clearDiffCache].
 	
 	pair := PTrueDiff new compare: oldTree to: newTree.
 	
 	node := pair first.
 	script := pair second.
-	node privateSource: newTree sourceString.
+	node privateSource: newSourceString.
 	
 	aBoolean ifFalse: [
 		validationBlocks do: [:b |
 			(b value: pair first value: aCollection value: pair second) ifFalse: [
 				script undo.
 				node := oldTree.
+				node privateSource: oldSourceString.
 				pendingChanges addAll: aCollection.
 				pendingChangesRevert addAll: (aCollection collect: [:change |
 					PChange
@@ -55,10 +96,10 @@ PEditorState >> applyChanges: aCollection force: aBoolean [
 				self shards do: [:shard | shard applyRejectedChanges: aCollection].
 				^ false]]].
 	
-	self shards do: [:shard | shard applyChanges: aCollection editScript: pair second].
-	
 	pendingChanges := OrderedCollection new.
 	self basicSourceString: newSourceString.
+	
+	self shards do: [:shard | shard applyChanges: aCollection editScript: pair second].
 	
 	^ true
 ]
@@ -97,12 +138,21 @@ PEditorState >> initialize [
 ]
 
 {
+	#category : #changes,
+	#'squeak_changestamp' : 'tobe 4/15/2024 15:48'
+}
+PEditorState >> pendingChanges [
+
+	^ pendingChanges
+]
+
+{
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/13/2024 07:52'
+	#'squeak_changestamp' : 'tobe 4/16/2024 07:22'
 }
 PEditorState >> range [
 
-	^ 0 to: self sourceString size
+	^ SBTSRange indexStart: 0 end: self sourceString size
 ]
 
 {
@@ -117,11 +167,14 @@ PEditorState >> registerValidation: aBlock [
 
 {
 	#category : #changes,
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:56'
+	#'squeak_changestamp' : 'tobe 4/16/2024 06:57'
 }
 PEditorState >> revertPendingChanges [
 
-	self shards do: [:shard | shard basicApplyChanges: pendingChangesRevert editScript: nil]
+	pendingChanges := OrderedCollection new.
+	self shards do: [:shard |
+		shard updateText
+		"shard basicApplyChanges: pendingChangesRevert editScript: nil"]
 ]
 
 {
@@ -163,13 +216,13 @@ PEditorState >> sourceString [
 
 {
 	#category : #accessing,
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:35'
+	#'squeak_changestamp' : 'tobe 4/19/2024 18:31'
 }
 PEditorState >> sourceString: aString [
 
 	self basicSourceString: aString.
 	
-	node := PNode parse: aString language: SBJavascript.
+	node := PBaseParser parse: aString old: nil.
 	rootShard nodes: {node}.
 	
 	self applyChanges: {PChange range: self range insert: aString} force: true

@@ -60,7 +60,7 @@ PEditorTest >> testApplyChangeInReplacementRemovesIt [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:47'
+	#'squeak_changestamp' : 'tobe 4/16/2024 06:57'
 }
 PEditorTest >> testApplyRejectedChange [
 
@@ -199,7 +199,30 @@ PEditorTest >> testFindChangeDeleteAtEnd [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 10:47'
+	#'squeak_changestamp' : 'tobe 4/17/2024 11:57'
+}
+PEditorTest >> testMarker [
+
+	| e testExt attr |
+	attr := TextColor red.
+	testExt := PExtension new
+		requireModel: SBJavascript;
+		registerMarker: (PMarkerDefinition new
+			name: 'test';
+			query: {[:x | x type = #number]};
+			style: attr).
+	
+	e := PEditorState new.
+	e rootShard extensions: [{testExt}].
+	e sourceString: 'a+12'.
+	
+	self assert: {attr} equals: (e rootShard view text attributesAt: 3).
+	self assert: {attr} equals: (e rootShard view text attributesAt: 4)
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 07:27'
 }
 PEditorTest >> testMultipleReplacements [
 
@@ -240,7 +263,7 @@ PEditorTest >> testOverlappingReplacements [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:55'
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:22'
 }
 PEditorTest >> testRejectChange [
 
@@ -256,7 +279,129 @@ PEditorTest >> testRejectChange [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:56'
+	#'squeak_changestamp' : 'tobe 4/17/2024 08:39'
+}
+PEditorTest >> testRejectChangeAndEdit [
+
+	| e testExt |
+	testExt := PExtension new registerReplacement: (PReplacementDefinition new
+		name: 'test';
+		query: {[:x | x type = #number]. [:x | x parent type = #array]};
+		init: [:node :replacement | | s2 s1 |
+				s1 := replacement setProperty: #s1 toValue: replacement createShard.
+				s2 := replacement setProperty: #s2 toValue: replacement createShard.
+				replacement addMorphBack: s1.
+				replacement addMorphBack: s2]
+			update: [:node :replacement |
+				(replacement valueOfProperty: #s1) nodes: {node}.
+				(replacement valueOfProperty: #s2) nodes: {node}]).
+	
+	e := PEditorState new.
+	e registerValidation: [:node :changes :script | false].
+	e rootShard extensions: [{testExt}].
+	e sourceString: '[12]'.
+	
+	self assert: '[', Character startOfHeader, ']' equals: e rootShard view text string.
+	
+	e applyChanges: {(PChange range: (3 to: 3) insert: '3') sideAffinity: -1}.
+	self assert: '[', Character startOfHeader, ']' equals: e rootShard view text string.
+	
+	self assert: 1 equals: e rootShard replacements size.
+	self assert: 3 equals: e shards size.
+	self assert: {'123'. '123'} equals: ((e shards reject: [:s | s = e rootShard])
+		collect: [:s | s view text string]
+		as: Array)
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:22'
+}
+PEditorTest >> testRejectResetsIndizes [
+
+	| e |
+	e := PEditorState new.
+	e registerValidation: [:node :changes :script | false].
+	e sourceString: '12'.
+	
+	e applyChanges: {PChange range: (2 to: 2) insert: '3'}.
+	self
+		assert: (SBTSRange indexStart: 0 end: 2)
+		equals: e rootShard nodes first baseChildren first baseChildren first range
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/17/2024 08:38'
+}
+PEditorTest >> testRejectedChangeAffinity [
+
+	| e testExt nestedShard |
+	testExt := PExtension new registerReplacement: (PReplacementDefinition new
+		name: 'test';
+		query: {[:x | x type = #number]. [:x | x parent type = #array]};
+		init: [:node :replacement | replacement addMorphBack: (replacement setProperty: #s1 toValue: replacement createShard)]
+			update: [:node :replacement | (replacement valueOfProperty: #s1) nodes: {node}]).
+	
+	e := PEditorState new.
+	e registerValidation: [:node :changes :script | false].
+	e rootShard extensions: [{testExt}].
+	e sourceString: '[12]'.
+	nestedShard := e shards detect: [:s | s ~= e rootShard].
+	
+	self assert: '[', Character startOfHeader, ']' equals: e rootShard view text string.
+	
+	nestedShard onChange: '123'.
+	self assert: '[', Character startOfHeader, ']' equals: e rootShard view text string.
+	self assert: '123' equals: nestedShard view text string.
+	
+	e rootShard onChange: '[', Character startOfHeader, '4]'.
+	self assert: '[', Character startOfHeader, '4]' equals: e rootShard view text string.
+	self assert: '123' equals: nestedShard view text string
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/17/2024 08:28'
+}
+PEditorTest >> testRejectedChangesIndex [
+
+	| e testExt |
+	testExt := PExtension new registerReplacement: (PReplacementDefinition new
+		name: 'test';
+		query: {[:x | x type = #number]. [:x | x parent type = #array]};
+		init: [:node :replacement | | s2 s1 |
+				s1 := replacement setProperty: #s1 toValue: replacement createShard.
+				s2 := replacement setProperty: #s2 toValue: replacement createShard.
+				replacement addMorphBack: s1.
+				replacement addMorphBack: s2]
+			update: [:node :replacement |
+				(replacement valueOfProperty: #s1) nodes: {node}.
+				(replacement valueOfProperty: #s2) nodes: {node}]).
+	
+	e := PEditorState new.
+	e registerValidation: [:node :changes :script | false].
+	e rootShard extensions: [{testExt}].
+	e sourceString: '[12]'.
+	
+	self assert: '[', Character startOfHeader, ']' equals: e rootShard view text string.
+	
+	e applyChanges: {PChange range: (1 to: 1) insert: '3'}.
+	self assert: '[', Character startOfHeader, ']' equals: e rootShard view text string.
+	self assert: {'312'. '312'} equals: ((e shards reject: [:s | s = e rootShard])
+		collect: [:s | s view text string]
+		as: Array).
+	
+	e applyChanges: {(PChange range: (4 to: 4) insert: '4') sideAffinity: -1}.
+	self assert: '[', Character startOfHeader, ']' equals: e rootShard view text string.
+	self assert: {'3124'. '3124'} equals: ((e shards reject: [:s | s = e rootShard])
+		collect: [:s | s view text string]
+		as: Array)
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 06:58'
 }
 PEditorTest >> testRevertRejectedChange [
 

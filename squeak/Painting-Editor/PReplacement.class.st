@@ -104,7 +104,7 @@ PReplacement >> localIndex: aNumber in: aShard [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 10:34'
+	#'squeak_changestamp' : 'tobe 4/16/2024 07:26'
 }
 PReplacement >> localRangeIn: aShard do: aBlock [
 
@@ -133,9 +133,18 @@ PReplacement >> node: aNode [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/13/2024 10:30'
+	#'squeak_changestamp' : 'tobe 4/16/2024 07:01'
 }
 PReplacement >> range [
 
-	^ node range
+	^ self editor adjustRange: node range
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 07:06'
+}
+PReplacement >> sourceString [
+
+	^ self node sourceString
 ]

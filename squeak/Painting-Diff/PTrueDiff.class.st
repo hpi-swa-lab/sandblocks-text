@@ -199,12 +199,15 @@ PTrueDiff >> computeEditScriptListsFrom: thisList to: thatList parent: aNode lin
 	^ result
 ]
 
-{ #category : #'as yet unclassified' }
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:06'
+}
 PTrueDiff >> computeEditScriptRecurse2From: this to: that parent: aNode parentType: aSymbol link: aLink in: anEditBuffer [
 
 	^ this type = that type
 		ifTrue: [ | thatList thisList |
-			this range: that range.
+			anEditBuffer update: this range: that range.
 			
 			thisList := this baseChildren asOrderedCollection.
 			thatList := that baseChildren asOrderedCollection.
@@ -262,12 +265,15 @@ PTrueDiff >> computeEditScriptRecurse2From: this to: that parent: aNode parentTy
 		ifFalse: [nil]
 ]
 
-{ #category : #'as yet unclassified' }
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:06'
+}
 PTrueDiff >> computeEditScriptRecurseFrom: this to: that parent: aNode parentType: aSymbol link: aLink in: anEditBuffer [
 
 	^ (this type = that type and: [this baseChildren size = that baseChildren size])
 		ifTrue: [
-			this range: that range.
+			anEditBuffer update: this range: that range.
 			this baseChildren with: that baseChildren do: [:thisNode :thatNode | | newNode |
 				newNode := self
 					computeEditScriptFrom: thisNode
@@ -331,10 +337,13 @@ PTrueDiff >> unloadUnassigned: aNode in: anEditBuffer [
 		aNode baseChildren do: [:c | self unloadUnassigned: c in: anEditBuffer]]
 ]
 
-{ #category : #'as yet unclassified' }
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:06'
+}
 PTrueDiff >> updateLiteralsFrom: this to: that in: anEditBuffer [
 
-	this range: that range.
+	anEditBuffer update: this range: that range.
 	this treeLabel = that treeLabel ifFalse: [anEditBuffer update: this to: that contents].
 	this baseChildren
 		with: that baseChildren

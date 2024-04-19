@@ -5,7 +5,8 @@ Class {
 		'from',
 		'to',
 		'insert',
-		'sourceShard'
+		'sourceShard',
+		'sideAffinity'
 	],
 	#category : #'Painting-Editor'
 }
@@ -65,6 +66,24 @@ PChange >> insert [
 PChange >> insert: aString [
 
 	insert := aString
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:28'
+}
+PChange >> sideAffinity [
+
+	^ sideAffinity
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:28'
+}
+PChange >> sideAffinity: aNumber [
+
+	sideAffinity := aNumber
 ]
 
 {

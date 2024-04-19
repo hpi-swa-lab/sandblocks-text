@@ -4,17 +4,22 @@ Class {
 	#instVars : [
 		'parent',
 		'node',
-		'index'
+		'index',
+		'oldParent',
+		'oldIndex'
 	],
 	#category : #'Painting-Diff'
 }
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/13/2024 13:39'
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:57'
 }
 PAttachOp >> applyFor: aScript [
 
+	oldParent := node baseParent.
+	oldIndex := oldParent ifNotNil: [node baseSiblingIndex].
+	
 	parent addBaseChild: node at: index
 ]
 
@@ -58,9 +63,11 @@ PAttachOp >> parent [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:35'
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:56'
 }
 PAttachOp >> undo [
 
-	node baseRemoveFromParent
+	oldParent
+		ifNotNil: [oldParent addBaseChild: node at: oldIndex]
+		ifNil: [node baseRemoveFromParent]
 ]

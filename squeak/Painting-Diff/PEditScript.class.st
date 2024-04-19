@@ -3,7 +3,8 @@ Class {
 	#superclass : #Object,
 	#instVars : [
 		'posBuf',
-		'negBuf'
+		'negBuf',
+		'revertRanges'
 	],
 	#category : #'Painting-Diff'
 }
@@ -52,14 +53,16 @@ PEditScript >> initPos: aCollection neg: anotherCollection [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/13/2024 13:46'
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:05'
 }
 PEditScript >> initialize [
 
 	super initialize.
 	
 	posBuf := OrderedCollection new.
-	negBuf := OrderedCollection new
+	negBuf := OrderedCollection new.
+	
+	revertRanges := OrderedCollection new
 ]
 
 {
@@ -117,12 +120,23 @@ PEditScript >> removeDo: aBlock [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:34'
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:05'
 }
 PEditScript >> undo [
 
-	posBuf do: #undo.
-	negBuf do: #undo
+	posBuf reverseDo: #undo.
+	negBuf reverseDo: #undo.
+	revertRanges do: [:pair | pair key range: pair value]
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/16/2024 08:05'
+}
+PEditScript >> update: aNode range: aRange [
+
+	revertRanges add: aNode -> aNode range.
+	aNode range: aRange
 ]
 
 {
