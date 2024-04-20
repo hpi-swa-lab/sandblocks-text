@@ -6,7 +6,7 @@ Class {
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/13/2024 11:28'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:22'
 }
 PEditorTest >> testApplyChange [
 
@@ -24,13 +24,14 @@ PEditorTest >> testApplyChange [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 10:39'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:23'
 }
 PEditorTest >> testApplyChangeInReplacement [
 
 	| e testExt |
 	testExt := PExtension new registerReplacement: (PReplacementDefinition new
 		name: 'test';
+		model: SBJavascript;
 		query: {[:x | x type = #number]}).
 	e := PEditorState new.
 	e rootShard extensions: [{testExt}].
@@ -43,13 +44,14 @@ PEditorTest >> testApplyChangeInReplacement [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 11:02'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:23'
 }
 PEditorTest >> testApplyChangeInReplacementRemovesIt [
 
 	| e testExt |
 	testExt := PExtension new registerReplacement: (PReplacementDefinition new
 		name: 'test';
+		model: SBJavascript;
 		query: {[:x | x type = #number]}).
 	e := PEditorState new.
 	e rootShard extensions: [{testExt}].
@@ -60,13 +62,13 @@ PEditorTest >> testApplyChangeInReplacementRemovesIt [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/16/2024 06:57'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:23'
 }
 PEditorTest >> testApplyRejectedChange [
 
 	| e |
 	e := PEditorState new.
-	e registerValidation: [:root :change :diff | false].
+	e registerValidation: [:root :change :diff | false] for: PBaseParser.
 	e sourceString: '123'.
 	
 	e applyChanges: {PChange range: (0 to: 0) insert: 'a'}.
@@ -80,7 +82,7 @@ PEditorTest >> testApplyRejectedChange [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 11:17'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:23'
 }
 PEditorTest >> testBackspaceIntoReplacementCharacter [
 
@@ -88,6 +90,7 @@ PEditorTest >> testBackspaceIntoReplacementCharacter [
 	testExt := PExtension new registerReplacement: (PReplacementDefinition new
 		deletionInteraction: #character;
 		name: 'test';
+		model: SBJavascript;
 		query: {[:x | x type = #number]}).
 	e := PEditorState new.
 	e rootShard extensions: [{testExt}].
@@ -104,7 +107,7 @@ PEditorTest >> testBackspaceIntoReplacementCharacter [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:01'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
 }
 PEditorTest >> testEmbeddedShard [
 
@@ -112,6 +115,7 @@ PEditorTest >> testEmbeddedShard [
 	testExt := PExtension new registerReplacement: (PReplacementDefinition new
 		name: 'test';
 		query: {[:x | x type = #number]. [:x | x parent type = #array]};
+		model: SBJavascript;
 		init: [:node :replacement | | s |
 				s := replacement setProperty: #s toValue: replacement createShard.
 				replacement addMorphBack: s]
@@ -125,13 +129,14 @@ PEditorTest >> testEmbeddedShard [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 10:59'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
 }
 PEditorTest >> testEnterChangeAtStart [
 
 	| e testExt |
 	testExt := PExtension new registerReplacement: (PReplacementDefinition new
 		name: 'test';
+		model: SBJavascript;
 		query: {[:x | x type = #number]}).
 	e := PEditorState new.
 	e rootShard extensions: [{testExt}].
@@ -143,7 +148,7 @@ PEditorTest >> testEnterChangeAtStart [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/13/2024 14:44'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
 }
 PEditorTest >> testFindChange [
 
@@ -157,7 +162,7 @@ PEditorTest >> testFindChange [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/13/2024 14:44'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
 }
 PEditorTest >> testFindChangeAtEnd [
 
@@ -171,7 +176,7 @@ PEditorTest >> testFindChangeAtEnd [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/13/2024 14:44'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
 }
 PEditorTest >> testFindChangeDelete [
 
@@ -185,7 +190,7 @@ PEditorTest >> testFindChangeDelete [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/13/2024 14:44'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
 }
 PEditorTest >> testFindChangeDeleteAtEnd [
 
@@ -199,18 +204,17 @@ PEditorTest >> testFindChangeDeleteAtEnd [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/17/2024 11:57'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
 }
 PEditorTest >> testMarker [
 
 	| e testExt attr |
 	attr := TextColor red.
-	testExt := PExtension new
-		requireModel: SBJavascript;
-		registerMarker: (PMarkerDefinition new
-			name: 'test';
-			query: {[:x | x type = #number]};
-			style: attr).
+	testExt := PExtension new registerMarker: (PMarkerDefinition new
+		name: 'test';
+		model: SBJavascript;
+		query: {[:x | x type = #number]};
+		style: attr).
 	
 	e := PEditorState new.
 	e rootShard extensions: [{testExt}].
@@ -222,13 +226,14 @@ PEditorTest >> testMarker [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/16/2024 07:27'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
 }
 PEditorTest >> testMultipleReplacements [
 
 	| e testExt |
 	testExt := PExtension new registerReplacement: (PReplacementDefinition new
 		name: 'test';
+		model: SBJavascript;
 		query: {[:x | x type = #number]}).
 	e := PEditorState new.
 	e rootShard extensions: [{testExt}].
@@ -240,7 +245,7 @@ PEditorTest >> testMultipleReplacements [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:14'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
 }
 PEditorTest >> testOverlappingReplacements [
 
@@ -248,9 +253,11 @@ PEditorTest >> testOverlappingReplacements [
 	testExt := PExtension new
 		registerReplacement: (PReplacementDefinition new
 			name: 'test';
+			model: SBJavascript;
 			query: {[:x | x type = #number]});
 		registerReplacement: (PReplacementDefinition new
 			name: 'test2';
+			model: SBJavascript;
 			query: {[:x | x type = #array]}).
 	
 	e := PEditorState new.
@@ -263,13 +270,13 @@ PEditorTest >> testOverlappingReplacements [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/16/2024 08:22'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
 }
 PEditorTest >> testRejectChange [
 
 	| e |
 	e := PEditorState new.
-	e registerValidation: [:root :change :diff | false].
+	e registerValidation: [:root :change :diff | false] for: PBaseParser.
 	e sourceString: '123'.
 	
 	e applyChanges: {PChange range: (0 to: 0) insert: 'a'}.
@@ -279,13 +286,14 @@ PEditorTest >> testRejectChange [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/17/2024 08:39'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:25'
 }
 PEditorTest >> testRejectChangeAndEdit [
 
 	| e testExt |
 	testExt := PExtension new registerReplacement: (PReplacementDefinition new
 		name: 'test';
+		model: SBJavascript;
 		query: {[:x | x type = #number]. [:x | x parent type = #array]};
 		init: [:node :replacement | | s2 s1 |
 				s1 := replacement setProperty: #s1 toValue: replacement createShard.
@@ -297,7 +305,7 @@ PEditorTest >> testRejectChangeAndEdit [
 				(replacement valueOfProperty: #s2) nodes: {node}]).
 	
 	e := PEditorState new.
-	e registerValidation: [:node :changes :script | false].
+	e registerValidation: [:node :changes :script | false] for: PBaseParser.
 	e rootShard extensions: [{testExt}].
 	e sourceString: '[12]'.
 	
@@ -315,36 +323,38 @@ PEditorTest >> testRejectChangeAndEdit [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/16/2024 08:22'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:26'
 }
 PEditorTest >> testRejectResetsIndizes [
 
 	| e |
 	e := PEditorState new.
-	e registerValidation: [:node :changes :script | false].
+	e models at: SBJavascript put: nil.
+	e registerValidation: [:node :changes :script | false] for: PBaseParser.
 	e sourceString: '12'.
 	
 	e applyChanges: {PChange range: (2 to: 2) insert: '3'}.
 	self
 		assert: (SBTSRange indexStart: 0 end: 2)
-		equals: e rootShard nodes first baseChildren first baseChildren first range
+		equals: (e models at: SBJavascript) baseChildren first baseChildren first range
 ]
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/17/2024 08:38'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:26'
 }
 PEditorTest >> testRejectedChangeAffinity [
 
 	| e testExt nestedShard |
 	testExt := PExtension new registerReplacement: (PReplacementDefinition new
 		name: 'test';
+		model: SBJavascript;
 		query: {[:x | x type = #number]. [:x | x parent type = #array]};
 		init: [:node :replacement | replacement addMorphBack: (replacement setProperty: #s1 toValue: replacement createShard)]
 			update: [:node :replacement | (replacement valueOfProperty: #s1) nodes: {node}]).
 	
 	e := PEditorState new.
-	e registerValidation: [:node :changes :script | false].
+	e registerValidation: [:node :changes :script | false] for: PBaseParser.
 	e rootShard extensions: [{testExt}].
 	e sourceString: '[12]'.
 	nestedShard := e shards detect: [:s | s ~= e rootShard].
@@ -362,13 +372,14 @@ PEditorTest >> testRejectedChangeAffinity [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/17/2024 08:28'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:27'
 }
 PEditorTest >> testRejectedChangesIndex [
 
 	| e testExt |
 	testExt := PExtension new registerReplacement: (PReplacementDefinition new
 		name: 'test';
+		model: SBJavascript;
 		query: {[:x | x type = #number]. [:x | x parent type = #array]};
 		init: [:node :replacement | | s2 s1 |
 				s1 := replacement setProperty: #s1 toValue: replacement createShard.
@@ -380,7 +391,7 @@ PEditorTest >> testRejectedChangesIndex [
 				(replacement valueOfProperty: #s2) nodes: {node}]).
 	
 	e := PEditorState new.
-	e registerValidation: [:node :changes :script | false].
+	e registerValidation: [:node :changes :script | false] for: PBaseParser.
 	e rootShard extensions: [{testExt}].
 	e sourceString: '[12]'.
 	
@@ -401,13 +412,13 @@ PEditorTest >> testRejectedChangesIndex [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/16/2024 06:58'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:27'
 }
 PEditorTest >> testRevertRejectedChange [
 
 	| e |
 	e := PEditorState new.
-	e registerValidation: [:root :change :diff | false].
+	e registerValidation: [:root :change :diff | false] for: PBaseParser.
 	e sourceString: '123'.
 	
 	e applyChanges: {PChange range: (0 to: 0) insert: 'a'}.
@@ -421,13 +432,14 @@ PEditorTest >> testRevertRejectedChange [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 11:05'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:27'
 }
 PEditorTest >> testToggleReplacement [
 
 	| e testExt |
 	testExt := PExtension new registerReplacement: (PReplacementDefinition new
 		name: 'test';
+		model: SBJavascript;
 		query: {[:x | x type = #number]}).
 	e := PEditorState new.
 	e rootShard extensions: [{testExt}].

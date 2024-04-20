@@ -112,11 +112,13 @@ PTrueDiff >> assignTreeRecFrom: this to: that [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/13/2024 13:46'
+	#'squeak_changestamp' : 'tobe 4/19/2024 18:40'
 }
 PTrueDiff >> compare: this to: that [
 
 	| subtreeReg buffer root |
+	this allBaseChildrenDo: [:m | m clearDiffCache].
+	
 	subtreeReg := PSubtreeRegistry new.
 	self assignSharesFrom: this to: that subtreeReg: subtreeReg.
 	self assignSubtreesFrom: this to: that subtreeReg: subtreeReg.
@@ -126,13 +128,18 @@ PTrueDiff >> compare: this to: that [
 	^ {root. buffer}
 ]
 
-{ #category : #'as yet unclassified' }
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:22'
+}
 PTrueDiff >> computeEditScriptFrom: this to: that parent: anotherNode parentType: aSymbol link: aLink edits: anEditBuffer [
 
 	| newTree |
 	(this assigned notNil and: [this assigned uri = that uri]) ifTrue: [
 		newTree := this literalMatch
-			ifTrue: [this]
+			ifTrue: [
+				anEditBuffer update: this range: that range.
+				this]
 			ifFalse: [self updateLiteralsFrom: this to: that in: anEditBuffer].
 		this assigned: nil.
 		^ newTree].

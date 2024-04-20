@@ -46,30 +46,25 @@ PShard >> adjustLocalIndex: aNumber [
 
 {
 	#category : #replacements,
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:11'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:17'
 }
-PShard >> allVisibleNodesDo: aBlock [
+PShard >> allVisibleNodesDo: aBlock root: aRoot [
 
 	| replaced |
-	replaced := self replacements collect: #node.
-	self nodes do: [:root | root allVisibleNodesDo: aBlock hidden: replaced]
+	replaced := Array streamContents: [:s | self replacements do: [:r | r definition model = aRoot language ifTrue: [s nextPut: r node]]].
+	
+	self nodes first language = aRoot language
+		ifTrue: [self nodes do: [:root | root allVisibleNodesDo: aBlock hidden: replaced]]
+		ifFalse: [aRoot firstChildrenInRange: self range do: [:root | root allVisibleNodesDo: aBlock hidden: replaced]]
 ]
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/16/2024 06:56'
+	#'squeak_changestamp' : 'tobe 4/19/2024 18:37'
 }
 PShard >> applyChanges: aCollection editScript: aScript [
 
-	SBVariant
-		named: 'basicApplyChanges:editScript:'
-		associations: {'with' -> [self basicApplyChanges: aCollection editScript: aScript]. 'without' -> []}
-		activeIndex: 2
-		id: 'f68c7837-9e18-4cb2-aa11-bff64362b962'
-		isActive: true.
-	
-	self updateReplacementsFor: aScript.
-	self updateText
+	self updateReplacementsFor: aScript
 ]
 
 {
@@ -107,21 +102,25 @@ PShard >> editor [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/13/2024 08:10'
+	#'squeak_changestamp' : 'tobe 4/19/2024 21:06'
 }
 PShard >> editor: anEditor [
 
 	anEditor shards add: self.
-	editor := anEditor
+	editor := anEditor.
+	
+	anEditor ensureModels: self requiredModels
 ]
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/13/2024 10:13'
+	#'squeak_changestamp' : 'tobe 4/19/2024 21:06'
 }
 PShard >> extensions: aBlock [
 
-	extensions := aBlock
+	extensions := aBlock.
+	
+	editor ifNotNil: [editor ensureModels: self requiredModels]
 ]
 
 {
@@ -271,24 +270,25 @@ PShard >> nodes [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:00'
+	#'squeak_changestamp' : 'tobe 4/19/2024 20:51'
 }
 PShard >> nodes: aCollection [
 
 	nodes := aCollection.
 	
 	lastActualSourceString ifNil: [
-		self
-			applyChanges: {
-				PChange
-					range: (nodes first range first to: nodes last range last)
-					insert: (nodes inject: '' into: [:s :n | s, n sourceString])}
-			editScript: (PEditScript new initPos: (nodes gather: #initOperations) neg: {})]
+		self editor models keysAndValuesDo: [:model :root |
+			self
+				updateReplacementsFor: (PEditScript new
+					initPos: (Array streamContents: [:s | root firstChildrenInRange: self range do: [:node | s nextPutAll: node initOperations]])
+					neg: {})
+				root: root].
+		self updateText]
 ]
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/17/2024 08:32'
+	#'squeak_changestamp' : 'tobe 4/19/2024 21:01'
 }
 PShard >> onChange: aNewString [
 
@@ -312,7 +312,9 @@ PShard >> onChange: aNewString [
 					range: ((self adjustLocalIndex: (change at: #from) - 1) to: (self adjustLocalIndex: (change at: #to) - 1))
 					insert: (change at: #insert ifAbsent: ['']) string)
 					sourceShard: self;
-					sideAffinity: ((self isShowingIndex: (change at: #from) - 1) ifTrue: [-1] ifFalse: [1])}]
+					sideAffinity: ((self isShowingIndex: (change at: #from) - 1)
+						ifTrue: [-1]
+						ifFalse: [1])}]
 ]
 
 {
@@ -343,6 +345,15 @@ PShard >> replacements [
 ]
 
 {
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/19/2024 21:07'
+}
+PShard >> requiredModels [
+
+	^ (extensions value gather: [:ext | (ext markerDefinitions collect: #model), (ext replacementDefinitions collect: #model)]) asSet
+]
+
+{
 	#category : #'marker api',
 	#'squeak_changestamp' : 'tobe 4/17/2024 11:49'
 }
@@ -365,7 +376,7 @@ PShard >> styleRemove: aMarker [
 
 {
 	#category : #replacements,
-	#'squeak_changestamp' : 'tobe 4/15/2024 16:16'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:14'
 }
 PShard >> uninstallReplacement: aReplacement [
 
@@ -376,9 +387,9 @@ PShard >> uninstallReplacement: aReplacement [
 
 {
 	#category : #replacements,
-	#'squeak_changestamp' : 'tobe 4/17/2024 11:52'
+	#'squeak_changestamp' : 'tobe 4/20/2024 08:22'
 }
-PShard >> updateReplacementsFor: anEditScript [
+PShard >> updateReplacementsFor: anEditScript root: aRoot [
 
 	anEditScript removeDo: [:op |
 		self replacements
@@ -387,22 +398,26 @@ PShard >> updateReplacementsFor: anEditScript [
 		attributes do: [:attr | op node = attr node ifTrue: [attr definition detach value: self value: op node value: attr]]].
 	
 	extensions value do: [:ext |
-		ext replacementDefinitions do: [:def |
-			self allVisibleNodesDo: [:node | | matches |
-				matches := (DCQuery script: def query with: node) notNil.
-				self replacements
-					detect: [:r | r definition name = def name and: [node = r node]]
-					ifFound: [:r | matches ifFalse: [self uninstallReplacement: r]]
-					ifNone: [matches ifTrue: [self installReplacement: def for: node]]]]].
+		(ext replacementDefinitions select: [:def | def model = aRoot language]) do: [:def |
+			self
+				allVisibleNodesDo: [:node | | matches |
+					matches := (DCQuery script: def query with: node) notNil.
+					self replacements
+						detect: [:r | r definition name = def name and: [node = r node]]
+						ifFound: [:r | matches ifFalse: [self uninstallReplacement: r]]
+						ifNone: [matches ifTrue: [self installReplacement: def for: node]]]
+				root: aRoot]].
 	
 	extensions value do: [:ext |
-		ext markerDefinitions do: [:def |
-			self allVisibleNodesDo: [:node | | matches |
-				matches := (DCQuery script: def query with: node) notNil.
-				attributes
-					detect: [:attr | attr definition name = def name and: [node = attr node]]
-					ifFound: [:attr | matches ifFalse: [def detach value: self value: node value: attr]]
-					ifNone: [matches ifTrue: [def attach value: self value: node]]]]]
+		(ext markerDefinitions select: [:def | def model = aRoot language]) do: [:def |
+			self
+				allVisibleNodesDo: [:node | | matches |
+					matches := (DCQuery script: def query with: node) notNil.
+					attributes
+						detect: [:attr | attr definition name = def name and: [node = attr node]]
+						ifFound: [:attr | matches ifFalse: [def detach value: self value: node value: attr]]
+						ifNone: [matches ifTrue: [def attach value: self value: node]]]
+				root: aRoot]]
 ]
 
 {

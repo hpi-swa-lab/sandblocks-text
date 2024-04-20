@@ -5,7 +5,8 @@ Class {
 		'query',
 		'name',
 		'attach',
-		'detach'
+		'detach',
+		'model'
 	],
 	#category : #'Painting-Editor'
 }
@@ -44,6 +45,24 @@ PMarkerDefinition >> detach [
 PMarkerDefinition >> detach: aBlock [
 
 	detach := aBlock
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/19/2024 18:33'
+}
+PMarkerDefinition >> model [
+
+	^ model
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/19/2024 18:34'
+}
+PMarkerDefinition >> model: aClass [
+
+	model := aClass
 ]
 
 {

@@ -5,10 +5,10 @@ Class {
 		'sourceString',
 		'rootShard',
 		'shards',
-		'node',
 		'validationBlocks',
 		'pendingChanges',
-		'pendingChangesRevert'
+		'pendingChangesRevert',
+		'models'
 	],
 	#category : #'Painting-Editor'
 }
@@ -63,31 +63,31 @@ PEditorState >> applyChanges: aCollection [
 
 {
 	#category : #changes,
-	#'squeak_changestamp' : 'tobe 4/19/2024 18:14'
+	#'squeak_changestamp' : 'tobe 4/19/2024 21:10'
 }
 PEditorState >> applyChanges: aCollection force: aBoolean [
 
-	| newSourceString oldTree newTree pair script oldSourceString |
+	| newSourceString pair oldSourceString editScripts oldModels |
 	newSourceString := aCollection, pendingChanges
 		inject: self sourceString
 		into: [:new :change | change applyTo: new].
-	oldSourceString := node sourceString.
-	oldTree := node.
-	newTree := "PNode parse: newSourceString old: oldTree language: oldTree language"PWhitespaceParser parse: newSourceString old: oldTree.
-	oldTree allBaseChildrenDo: [:m | m clearDiffCache].
+	oldSourceString := sourceString.
+	oldModels := models copy.
 	
-	pair := PTrueDiff new compare: oldTree to: newTree.
-	
-	node := pair first.
-	script := pair second.
-	node privateSource: newSourceString.
+	editScripts := oldModels collect: [:oldRoot | | newRoot |
+		newRoot := oldRoot language parse: newSourceString old: oldRoot.
+		
+		pair := PTrueDiff new compare: oldRoot to: newRoot.
+		pair first privateSource: newSourceString.
+		models at: oldRoot language put: pair first.
+		pair second].
 	
 	aBoolean ifFalse: [
 		validationBlocks do: [:b |
-			(b value: pair first value: aCollection value: pair second) ifFalse: [
-				script undo.
-				node := oldTree.
-				node privateSource: oldSourceString.
+			(b value value: (models at: b key) value: aCollection value: (editScripts at: b key)) ifFalse: [
+				models := oldModels.
+				editScripts do: [:script | script undo].
+				models do: [:root | root privateSource: oldSourceString].
 				pendingChanges addAll: aCollection.
 				pendingChangesRevert addAll: (aCollection collect: [:change |
 					PChange
@@ -99,7 +99,9 @@ PEditorState >> applyChanges: aCollection force: aBoolean [
 	pendingChanges := OrderedCollection new.
 	self basicSourceString: newSourceString.
 	
-	self shards do: [:shard | shard applyChanges: aCollection editScript: pair second].
+	self shards do: [:shard |
+		editScripts keysAndValuesDo: [:model :editScript | shard updateReplacementsFor: editScript root: (models at: model)].
+		shard updateText].
 	
 	^ true
 ]
@@ -124,7 +126,16 @@ PEditorState >> basicSourceString: aString [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:45'
+	#'squeak_changestamp' : 'tobe 4/19/2024 21:08'
+}
+PEditorState >> ensureModels: aCollection [
+
+	aCollection do: [:model | models at: model ifAbsentPut: [sourceString ifNotNil: [model parse: sourceString old: nil]]]
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/19/2024 21:11'
 }
 PEditorState >> initialize [
 
@@ -134,7 +145,19 @@ PEditorState >> initialize [
 	rootShard := PShard new editor: self.
 	validationBlocks := OrderedCollection new.
 	pendingChanges := OrderedCollection new.
-	pendingChangesRevert := OrderedCollection new
+	pendingChangesRevert := OrderedCollection new.
+	models := Dictionary new
+		at: PBaseParser put: nil;
+		yourself
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/20/2024 06:56'
+}
+PEditorState >> models [
+
+	^ models
 ]
 
 {
@@ -157,24 +180,24 @@ PEditorState >> range [
 
 {
 	#category : #changes,
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:27'
+	#'squeak_changestamp' : 'tobe 4/19/2024 18:45'
 }
-PEditorState >> registerValidation: aBlock [
+PEditorState >> registerValidation: aBlock for: aModel [
 
-	validationBlocks add: aBlock.
-	^ [validationBlocks remove: aBlock]
+	| pair |
+	pair := aModel -> aBlock.
+	validationBlocks add: pair.
+	^ [validationBlocks remove: pair]
 ]
 
 {
 	#category : #changes,
-	#'squeak_changestamp' : 'tobe 4/16/2024 06:57'
+	#'squeak_changestamp' : 'tobe 4/19/2024 20:45'
 }
 PEditorState >> revertPendingChanges [
 
 	pendingChanges := OrderedCollection new.
-	self shards do: [:shard |
-		shard updateText
-		"shard basicApplyChanges: pendingChangesRevert editScript: nil"]
+	self shards do: [:shard | shard updateText]
 ]
 
 {
@@ -216,14 +239,23 @@ PEditorState >> sourceString [
 
 {
 	#category : #accessing,
-	#'squeak_changestamp' : 'tobe 4/19/2024 18:31'
+	#'squeak_changestamp' : 'tobe 4/20/2024 06:56'
 }
 PEditorState >> sourceString: aString [
 
 	self basicSourceString: aString.
 	
-	node := PBaseParser parse: aString old: nil.
-	rootShard nodes: {node}.
+	models := models keys
+		collect: [:model | model -> (model parse: aString old: nil)]
+		as: Dictionary.
+	rootShard nodes: {models at: PBaseParser}.
 	
-	self applyChanges: {PChange range: self range insert: aString} force: true
+	SBVariant
+		named: 'applyChanges:force:'
+		associations: {
+			'with' -> [self applyChanges: {PChange range: self range insert: aString} force: true].
+			'without' -> []}
+		activeIndex: 2
+		id: 'd49ab18e-5c1d-4597-86c3-de48065fb1bf'
+		isActive: true
 ]

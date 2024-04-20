@@ -7,7 +7,8 @@ Class {
 		'selectionInteraction',
 		'deletionInteraction',
 		'replacementClass',
-		'buildReplacement'
+		'buildReplacement',
+		'model'
 	],
 	#category : #'Painting-Editor'
 }
@@ -67,6 +68,24 @@ PReplacementDefinition >> initialize [
 	
 	selectionInteraction := #skip.
 	deletionInteraction := #character
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/19/2024 18:34'
+}
+PReplacementDefinition >> model [
+
+	^ model
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/19/2024 21:03'
+}
+PReplacementDefinition >> model: aModel [
+
+	model := aModel
 ]
 
 {

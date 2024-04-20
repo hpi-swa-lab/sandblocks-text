@@ -3,23 +3,21 @@ Class {
 	#superclass : #Object,
 	#instVars : [
 		'replacementDefinitions',
-		'markerDefinitions',
-		'requiredModels'
+		'markerDefinitions'
 	],
 	#category : #'Painting-Editor'
 }
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/17/2024 11:56'
+	#'squeak_changestamp' : 'tobe 4/19/2024 20:43'
 }
 PExtension >> initialize [
 
 	super initialize.
 	
 	replacementDefinitions := OrderedCollection new.
-	markerDefinitions := OrderedCollection new.
-	requiredModels := OrderedCollection new
+	markerDefinitions := OrderedCollection new
 ]
 
 {
@@ -56,13 +54,4 @@ PExtension >> registerReplacement: aReplacement [
 PExtension >> replacementDefinitions [
 
 	^ replacementDefinitions
-]
-
-{
-	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/17/2024 11:56'
-}
-PExtension >> requireModel: aLanguage [
-
-	requiredModels add: aLanguage
 ]

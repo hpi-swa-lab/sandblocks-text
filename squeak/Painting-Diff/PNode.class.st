@@ -1968,6 +1968,17 @@ PNode >> field: aString [
 	field := aString
 ]
 
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/19/2024 18:55'
+}
+PNode >> firstChildrenInRange: aRange do: aBlock [
+
+	(aRange containsRange: self range)
+		ifTrue: [aBlock value: self]
+		ifFalse: [self baseChildren do: [:c | c firstChildrenInRange: aRange do: aBlock]]
+]
+
 { #category : #'as yet unclassified' }
 PNode >> firstSourceCharacter [
 
