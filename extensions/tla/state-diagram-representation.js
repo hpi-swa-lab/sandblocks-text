@@ -91,6 +91,7 @@ ${stylesClassesMermaid}
 ${stateDefsMermaid}
 
 ${transitionsAsMermaid}`;
+
         return mermaidOutput;
     };
 

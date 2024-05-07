@@ -239,10 +239,10 @@ const State = ({ graph, initNodes }) => {
             flex: "1 1 0px",
             overflowY: "clip"
         }}>
-          <${RepresentationsPicker} actionLog=${actionLog} setActionLog=${setActionLog} 
-            representations=${representations} setRepresentations=${setRepresentations} 
-            currentTask=${currentTask} setCurrentTask=${setCurrentTask} />
           <div style=${{ display: "flex", justifyContent: "space-between", margin: "8px" }}>
+            <${RepresentationsPicker} actionLog=${actionLog} setActionLog=${setActionLog} 
+              representations=${representations} setRepresentations=${setRepresentations} 
+              currentTask=${currentTask} setCurrentTask=${setCurrentTask} />
             <${InitStateSelection} />
             <${UndoButton} />
           </div>

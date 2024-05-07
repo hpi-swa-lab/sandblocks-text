@@ -22,13 +22,13 @@ export function edgeToVizData({ reads, writes, label }) {
         const readFreq = actorSelectors[actor].flatMap(
             (s) => jmespath.search(onlyReads, s) ?? [],
         ).length;
-        const receivedAsyncMessages = jmespath.search(onlyReads, messagesSelector);
+        const receivedAsyncMessages = messagesSelector ? jmespath.search(onlyReads, messagesSelector) : [];
 
         const onlyWrites = { writes };
         const writeFreq = actorSelectors[actor].flatMap(
             (s) => jmespath.search(onlyWrites, s) ?? [],
         ).length;
-        const sentAsyncMessages = jmespath.search(onlyWrites, messagesSelector);
+        const sentAsyncMessages = messagesSelector ? jmespath.search(onlyWrites, messagesSelector) : [];
 
         const sum = readFreq + writeFreq;
         actorsFreqs.push({
@@ -56,10 +56,10 @@ export function edgeToVizData({ reads, writes, label }) {
     const toSyncMsgs = (acc, { actor, readFreq, writeFreq }) => {
         // we interpret reads and writes as synchronous messages:
         if (readFreq > 0) {
-            acc.push({ to: actor, type: "receive", label: `read` });
+            acc.push({ to: actor, type: "receive", label: `` });
         }
         if (writeFreq > 0) {
-            acc.push({ to: actor, type: "send", label: `write` });
+            acc.push({ to: actor, type: "send", label: `` });
         }
         return acc;
     };
