@@ -179,9 +179,16 @@ export class SBLanguage {
   parseSync(text, editor) {
     return this._assignState(this._parse(text), text, editor);
   }
+  /**
+   *
+   * @param {string} text
+   * @returns {SBNode}
+   */
   parseOffscreen(text) {
     const editor = new OffscreenEditor();
     const root = this.parseSync(text, editor);
+    editor.sourceString = text;
+    editor.models.set(this, root);
     editor.root = root;
     return root;
   }
@@ -410,6 +417,10 @@ export class SBNode {
     return this.children.find((child) => child.type === type);
   }
 
+  /**
+   * @param {string} type
+   * @returns {SBNode | null}
+   */
   firstOfType(type) {
     for (const child of this.allNodes()) {
       if (child.type === type) return child;

@@ -11,7 +11,7 @@ import { openIPyNotebook } from "./notebook.ts";
 import { openFileInWindow } from "./editor.ts";
 import { openExpressEditor } from "./express.ts";
 
-// import "../core/diff.test.ts";
+import "../core/model.test.ts";
 
 appendCss(`
 html {

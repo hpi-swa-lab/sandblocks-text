@@ -1,3 +1,4 @@
+import { SBLanguage } from "./model.js";
 import {
   TreeSitterComposedLanguage,
   TreeSitterLanguage,
@@ -9,6 +10,10 @@ export function registerLanguage(language) {
   languages.push(language);
 }
 
+/**
+ * @param {string} name
+ * @returns {SBLanguage}
+ */
 export function languageFor(name) {
   return languages.find((language) => language.name === name);
 }
