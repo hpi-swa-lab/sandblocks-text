@@ -227,11 +227,11 @@ export class Pane<T> {
   }
 
   connectNodes(v: Vitrail<T>, nodes: SBNode[]) {
-    this.startIndex = nodes[0].range[0];
+    this.startIndex = v.adjustRange(nodes[0].range)[0];
     this._startLineNumber = -1;
     this.nodes = nodes;
 
-    this.setText(v._sourceString.slice(this.range[0], this.range[1]), false);
+    this.setText(v._rootPane.getText().slice(...this.range), false);
 
     // FIXME need this extra loop?
     // for (const b of this._getInitEditBuffersForRoots([...v._models.values()]))

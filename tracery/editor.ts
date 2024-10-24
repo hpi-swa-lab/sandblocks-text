@@ -66,6 +66,7 @@ import {
 import { openComponentInWindow, parentWindow } from "./window.js";
 import { vectors } from "./glsl.ts";
 import { openExplorer } from "./explorer.ts";
+import { elm } from "./elm.ts";
 
 appendCss(`.diagnostic { background: rgba(255, 0, 0, 0.2); }`);
 
@@ -173,6 +174,11 @@ function extensionsFor(language: Model): {
     return {
       cmExtensions: [cmSql()],
       augmentations: [],
+    };
+  if (language === languageFor("elm"))
+    return {
+      cmExtensions: [],
+      augmentations: [elm]
     };
   return { cmExtensions: [], augmentations: [] };
 }

@@ -166,8 +166,13 @@ export class TrueDiff {
     if (a.type === b.type) {
       const aList = [...a.children];
       const bList = [...b.children];
-      this.assignSharesList(aList, bList, registry);
-      this.assignSharesList(aList.reverse(), bList.reverse(), registry);
+      // first go in order and match any literal matches
+      this.assignSharesList(aList, bList, registry, true);
+      this.assignSharesList(aList.reverse(), bList.reverse(), registry, true);
+      // then go in order and match structural matches
+      this.assignSharesList(aList, bList, registry, false);
+      this.assignSharesList(aList.reverse(), bList.reverse(), registry, false);
+      // handle the rest
       zipOrNullDo(aList.reverse(), bList.reverse(), (a, b) => {
         if (a) {
           if (b) {
@@ -186,11 +191,14 @@ export class TrueDiff {
       b.allChildrenDo((n) => registry.assignShare(n));
     }
   }
-  assignSharesList(aList, bList, registry) {
+  assignSharesList(aList, bList, registry, matchLiteral) {
     while (aList.length > 0 && bList.length > 0) {
       const aShare = registry.assignShare(aList[0]);
       const bShare = registry.assignShare(bList[0]);
-      if (aShare === bShare) {
+      if (
+        aShare === bShare &&
+        (!matchLiteral || aList[0].literalHash === bList[0].literalHash)
+      ) {
         this.assignTree(aList.shift(), bList.shift(), false);
       } else {
         break;
@@ -455,6 +463,12 @@ export class EditBuffer {
     this.pendingDetached = [];
     this.pendingLoaded = [];
   }
+  copy() {
+    const copy = new EditBuffer();
+    copy.posBuf = this.posBuf.slice();
+    copy.negBuf = this.negBuf.slice();
+    return copy;
+  }
   hasChangeIn(node) {
     for (const op of this.ops) {
       if (op.node.orHasParent(node)) return true;
@@ -632,4 +646,77 @@ export class Transaction {
   log(...op) {
     if (false) console.log(...op);
   }
+}
+
+export class DetachSubtree extends DiffOp {
+  constructor(root, ops) {
+    super();
+    this.node = root;
+    this.ops = ops;
+  }
+}
+export class RemoveSubtree extends DiffOp {
+  constructor(root, ops) {
+    super();
+    this.node = root;
+    this.ops = ops;
+  }
+}
+
+export function minimize(editBuffer) {
+  const buffer = editBuffer.copy();
+
+  for (const list of [buffer.posBuf, buffer.negBuf]) {
+    for (const op of list.slice()) {
+      if (op.node.isWhitespace()) {
+        list.splice(list.indexOf(op), 1);
+        console.log(op.node.id);
+      }
+    }
+  }
+  console.log(buffer.negBuf.map((n) => n.node.id));
+
+  for (const [opCls, summaryCls] of [
+    [DetachOp, DetachSubtree],
+    [RemoveOp, RemoveSubtree],
+  ]) {
+    const roots = new Map();
+    for (const op of buffer.ops) {
+      if (op instanceof opCls) {
+        let foundRoot = false;
+        for (const root of roots.keys()) {
+          if (op.node.orHasParent(root)) {
+            const list = roots.get(root);
+            if (!list) roots.set(root, [op]);
+            else list.push(op);
+            foundRoot = true;
+            break;
+          }
+        }
+        if (!foundRoot) {
+          for (const root of roots.keys()) {
+            if (root.orHasParent(op.node)) {
+              const current = roots.get(root);
+              roots.delete(root);
+              roots.set(op.node, [...current, root]);
+              foundRoot = true;
+              break;
+            }
+          }
+          if (!foundRoot) {
+            roots.set(op.node, [op]);
+          }
+        }
+      }
+    }
+    for (const [root, ops] of roots) {
+      const detachSubtree = new summaryCls(root, ops);
+      buffer.negBuf.push(detachSubtree);
+      for (const op of ops) {
+        buffer.negBuf.splice(buffer.negBuf.indexOf(op), 1);
+      }
+    }
+  }
+
+  return buffer;
 }

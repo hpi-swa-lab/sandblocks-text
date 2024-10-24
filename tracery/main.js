@@ -1,5 +1,6 @@
 import { h, render } from "../external/preact.mjs";
 import { FileProject } from "./project.js";
+import { request } from "./host.js";
 import { appendCss, linkCss, matchesKey } from "../utils.js";
 import { openBrowser } from "./browser.ts";
 import { openSearch } from "./search.js";
@@ -9,6 +10,8 @@ import { openPotluck } from "./potluck.ts";
 import { openIPyNotebook } from "./notebook.ts";
 import { openFileInWindow } from "./editor.ts";
 import { openExpressEditor } from "./express.ts";
+
+// import "../core/diff.test.ts";
 
 appendCss(`
 html {
@@ -127,6 +130,18 @@ function Tracery() {
     projectPath.value &&
       h("button", { onclick: () => openBrowser(project) }, "Open Browser"),
     h("button", { onclick: () => openPotluck() }, "Open Potluck"),
+    h(
+      "button",
+      {
+        onclick: () =>
+          request("installLanguage", {
+            repo: prompt("Repo? (just username/repo)"),
+            branch: prompt("Branch? (prefer commit hashes)"),
+            path: prompt("Path? (leave empty for root"),
+          }).then(() => alert("Installed!")),
+      },
+      "Install Language",
+    ),
   ];
 }
 

@@ -148,6 +148,15 @@ registerLanguage(
 );
 
 registerLanguage(
+  new TreeSitterLanguage({
+    repo: "elm-tooling/tree-sitter-elm",
+    branch: "27f502ed0a1cbd3c5912d284cc7934ee0d4cdddc",
+    extensions: ["elm"],
+    defaultExtensions: [],
+  }),
+);
+
+registerLanguage(
   new TreeSitterComposedLanguage({
     name: "markdown",
     extensions: ["md"],

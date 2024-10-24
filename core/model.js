@@ -316,6 +316,7 @@ export class SBNode {
   get parent() {
     return this._parent;
   }
+  /** @returns {[number, number]} */
   get range() {
     return this._range;
   }
@@ -437,7 +438,7 @@ export class SBNode {
   print(level = 0, namedOnly = false) {
     let out = "";
     for (let i = 0; i < level; i++) out += "  ";
-    out += this.type ?? `"${this.text.replace(/\n/g, "\\n")}"`;
+    out += this.type || `"${this.text.replace(/\n/g, "\\n")}"`;
     out += ` (${this.range[0]}, ${this.range[1]})`;
     out += "\n";
     for (const child of this.children) {
@@ -902,6 +903,10 @@ export class SBNode {
 const structureHashText = hash("text");
 
 export class SBText extends SBNode {
+  static test(text) {
+    return new SBText(text, 0, 0);
+  }
+
   constructor(text, start, end) {
     super();
     this._text = text;
@@ -951,6 +956,12 @@ export class SBBlock extends SBNode {
 
   static root(text, type = "document") {
     return new SBBlock(type, null, 0, text.length, true);
+  }
+
+  static test(type, children) {
+    const block = new SBBlock(type, null, 0, 0, true);
+    block.appendAll(children);
+    return block;
   }
 
   constructor(type, field, start, end, named) {

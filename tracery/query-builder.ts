@@ -193,7 +193,6 @@ function getPipelineStep(node) {
       ],
       [
         query("also([$_steps])"),
-        log("also"),
         all(
           [(it) => it.steps, getPipelineStep, capture("steps")],
           [() => PipelineSteps.ALSO, capture("stepType")],
