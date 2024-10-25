@@ -232,6 +232,15 @@ export class SBLanguage {
   isExpression(node) {
     return false;
   }
+
+  /**
+   * @param {String} str
+   * @param {SBNode} node
+   * @returns {boolean}
+   */
+  needsParenthesesInPosition(str, node) {
+    return false;
+  }
 }
 
 class _SBBaseLanguage extends SBLanguage {
@@ -811,6 +820,7 @@ export class SBNode {
   // edit operations
   replaceWith(str, editOptions) {
     if (typeof str === "number") str = str.toString();
+    if (this.language.needsParenthesesInPosition(str, this)) str = `(${str})`;
     this.editor.replaceTextFromCommand(this.range, str, editOptions);
   }
 

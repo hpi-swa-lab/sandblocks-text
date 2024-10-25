@@ -282,6 +282,11 @@ export class TreeSitterLanguage extends SBLanguage {
     }
   }
 
+  needsParenthesesInPosition(str, node) {
+    debugger;
+    return false;
+  }
+
   // node API
   _grammarBodyFor(node) {
     // TODO resolve aliases --> type would not be found
