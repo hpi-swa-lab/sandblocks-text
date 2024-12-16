@@ -8,8 +8,7 @@ Class {
 		'triggerPressed',
 		'triggerPressedPrev',
 		'buttonAPressed',
-		'buttonAPressedPrev',
-		'errorOccurredDuringRaycastHandling'
+		'buttonAPressedPrev'
 	],
 	#category : #'SqueakXR-Core'
 }
@@ -50,11 +49,7 @@ XRHand >> castRay [
 		hand: self.
 	"TODO: what if identifier is nil"
 	(self world xrObjectWithIdentifier: identifier) ifNotNil: [:xrObject |
-		[xrObject handleEvent: event]
-			on: Error
-			do: [:error |
-				errorOccurredDuringRaycastHandling := true.
-				error signal]].
+		xrObject handleEvent: event].
 ]
 
 { #category : #private }
@@ -73,12 +68,14 @@ XRHand >> closestIntersectionWithPointableObject [
 		intersectObjects: self world scene children.
 	
 	"TODO: find a better way to iterate over JS arrays"
-	0 to: intersections length - 1 do: [:idx || intersection |
+	0 to: intersections length - 1 do: [:idx || intersection isPointable |
 		intersection := intersections at: idx.
-		intersection object at: #userData ifPresent: [:userData |
-			userData at: #isPointable
-				ifPresent: [:isPointable |
-					isPointable ifTrue: [^ intersection]]]].
+		"TODO: JSObjectProxy does not yet support things like at:ifPresent:"
+		isPointable := (intersection object userData at: 'isPointable')
+			ifNil: false
+			ifNotNil: #value.
+		
+		isPointable ifTrue: [^ intersection]].
 	
 	^ nil
 ]
@@ -138,8 +135,6 @@ XRHand >> initialize [
 	super initialize.
 	self raycaster: Three Raycaster new.
 	
-	errorOccurredDuringRaycastHandling := false.
-	
 	triggerPressed := false.
 	triggerPressedPrev := false.
 	
@@ -163,16 +158,6 @@ XRHand >> initializeThreeObject [
 		inputSource := nil].
 	
 	^ obj
-]
-
-{ #category : #'as yet unclassified' }
-XRHand >> mayStep [
-
-	errorOccurredDuringRaycastHandling
-		ifTrue: [
-			errorOccurredDuringRaycastHandling := false.
-			self erroredInLastFrame: false].
-	^ super mayStep
 ]
 
 { #category : #accessing }

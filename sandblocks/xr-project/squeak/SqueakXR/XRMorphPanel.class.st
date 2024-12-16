@@ -6,7 +6,7 @@ Class {
 		'canvasTexture',
 		'canvas',
 		'pixelsPerMeter',
-		'preClickBlock'
+		'textureNeedsUpdate'
 	],
 	#category : #'SqueakXR-Core'
 }
@@ -24,6 +24,12 @@ XRMorphPanel >> canvas [
 		canvas := JS window document createElement: 'canvas']
 ]
 
+{ #category : #private }
+XRMorphPanel >> canvas: aCanvas [
+
+	canvas := aCanvas
+]
+
 { #category : #accessing }
 XRMorphPanel >> canvasTexture [
 
@@ -35,61 +41,28 @@ XRMorphPanel >> canvasTexture [
 			yourself]
 ]
 
-{ #category : #'as yet unclassified' }
-XRMorphPanel >> cleanupMorph [
+{ #category : #private }
+XRMorphPanel >> canvasTexture: aCanvasTexture [
 
-	morph delete
-]
-
-{ #category : #'as yet unclassified' }
-XRMorphPanel >> delete [
-
-	self cleanupMorph
+	canvasTexture := aCanvasTexture
 ]
 
 { #category : #accessing }
 XRMorphPanel >> handlePointing: anEvent [
 
-	| dimensions normalizedPoint point pointingInformation clickPoint event |
+	| dimensions normalizedPoint point pointingInformation |
 	anEvent hand triggerJustPressed ifFalse: [^ self].
 	
 	pointingInformation := anEvent info.
 	
-	point := (self threeObject worldToLocal: pointingInformation point) asVector.
-	dimensions := Vector3
-		x: pointingInformation object geometry parameters width
+	point := self threeObject worldToLocal: pointingInformation point.
+	dimensions := Three Vector3
+		new: pointingInformation object geometry parameters width
 		y: pointingInformation object geometry parameters height
 		z: 1.
-	normalizedPoint := point / dimensions.
+	normalizedPoint := point clone divide: dimensions.
 	normalizedPoint x: normalizedPoint x + 0.5.
 	normalizedPoint y: 1.0 - (normalizedPoint y + 0.5).
-	clickPoint := (normalizedPoint xy * (self morph extent)) asPoint + self morph topLeft.
-	
-	Transcript showln: clickPoint.
-	
-	"preClickBlock cull: self morph."
-	"self currentHand mouseFocus: morph."
-	"morph activate."
-	[event := MouseButtonEvent new
-		setType: #mouseDown
-		position: clickPoint asPoint
-		which: MouseButtonEvent redButton
-		buttons: MouseButtonEvent redButton
-		nClicks: 1
-		hand: self currentHand
-		stamp: Sensor eventTimeNow.
-	self currentHand handleEvent: event.
-	event := MouseButtonEvent new
-		setType: #mouseUp
-		position: clickPoint asPoint
-		which: MouseButtonEvent redButton
-		buttons: MouseButtonEvent redButton
-		nClicks: 1
-		hand: self currentHand
-		stamp: Sensor eventTimeNow.
-	self currentHand handleEvent: event.]
-		on: ProvideAnswerNotification
-		do: [:n | Transcript showln: n. n resume: true].
 	
 	"clickPoint := normalizedPoint multiply: self htmlElementSizeAsVector3.
 	clickedElement := self elementFromPoint: clickPoint.
@@ -100,8 +73,8 @@ XRMorphPanel >> handlePointing: anEvent [
 			#cancelable -> true.
 			# view -> JS window} as: Dictionary).
 	
-	self withElementSelectableDo: [clickedElement dispatchEvent: event]."
-	self updateTexture
+	self withElementSelectableDo: [clickedElement dispatchEvent: event].
+	self updateTexture"
 ]
 
 { #category : #initializing }
@@ -109,9 +82,8 @@ XRMorphPanel >> initialize [
 
 	super initialize.
 	
+	textureNeedsUpdate := false.
 	self pixelsPerMeter: 100.
-	
-	JS document onkeydown: [:event | [self onKeydown: event] on: Error do: [:e | Transcript showln: 'keydown error ', e asString]].
 ]
 
 { #category : #initializing }
@@ -140,60 +112,8 @@ XRMorphPanel >> morph [
 { #category : #accessing }
 XRMorphPanel >> morph: aMorph [
 
-	morph ifNotNil: [
-		self cleanupMorph].
-	
 	morph := aMorph.
-	morph openInWorld.
-	self updateTexture.
-]
-
-{ #category : #initializing }
-XRMorphPanel >> onKeydown: aJSEvent [
-
-	| character event value keyString keyCode keyValue buttons |
-	keyString := aJSEvent key asString.
-	(keyString size > 1 and: [keyString ~= 'Backspace']) ifTrue: [Transcript showln: 'Character string must be length 1: ', keyString. ^ self].
-	character := keyString first.
-	"character isAlphaNumeric ifFalse: [Transcript showln: 'No support for non-alphanumeric characters'. ^ self]."
-	value := EventSensor virtualKeyTable keyAtValue: character asUppercase.
-	[Transcript showln: ('keyString: "{1}" character: "{2}" value: "{3}" value to character: "{4}"' format: {keyString. character. value. EventSensor virtualKeyTable at: value. 1. 2. 3. 4}).]
-		on: Error do: [:e | Transcript showln: e].
-	
-	Transcript showln: aJSEvent ctrlKey.
-	keyValue := aJSEvent ctrlKey ifTrue: [115] ifFalse: [character asInteger].
-	keyCode := aJSEvent ctrlKey ifTrue: [1] ifFalse: [value].
-	buttons := aJSEvent ctrlKey ifTrue: [64] ifFalse: [0].
-	
-	keyString = 'Backspace' ifTrue: [
-		keyValue := 8.
-		keyCode := 51].
-	
-	event := KeyboardEvent new
-		setType: #keystroke
-		buttons: buttons
-		position: self currentHand position
-		keyValue: keyValue
-		keyCode: keyCode
-		hand: self currentHand
-		stamp: Sensor eventTimeNow.
-	[self currentHand keyboardFocus keyStroke: event.]
-		on: Error
-		do: [:e | Transcript showln: 'error occurred during keystroke: ', e description asString].
-	Transcript showln: event .
-	Transcript showln: self currentHand keyboardFocus.
-	self updateTexture.
-	aJSEvent preventDefault.
-	"self currentHand handleEvent: event."
-	"event := KeyboardEvent new
-		setType: #keyUp
-		buttons: 0
-		position: self currentHand position
-		keyValue: value
-		keyCode: value
-		hand: self currentHand
-		stamp: Sensor eventTimeNow.
-	self currentHand handleEvent: event."
+	self queueTextureUpdate.
 ]
 
 { #category : #'as yet unclassified' }
@@ -209,30 +129,32 @@ XRMorphPanel >> pixelsPerMeter: aNumber [
 ]
 
 { #category : #accessing }
-XRMorphPanel >> preClickBlock: aBlock [
+XRMorphPanel >> queueTextureUpdate [
 
-	preClickBlock := aBlock
+	textureNeedsUpdate := true
 ]
 
 { #category : #accessing }
-XRMorphPanel >> scale [
+XRMorphPanel >> step: deltaTime [
+
+	textureNeedsUpdate ifTrue: [self updateTexture]
 ]
 
 { #category : #'as yet unclassified' }
 XRMorphPanel >> updateTexture [
 
-	self morph ifNil: [^ self].
-
 	self canvas
 		width: self morph width;
 		height: self morph height.
 	self threeObject scale
-		set: self morph width / self pixelsPerMeter;
-		y: self morph height / self pixelsPerMeter;
+		set: self morph width / self pixelsPerMeter
+		y: self morph height / self pixelsPerMeter
 		z: 1.0.
 	
 	self morph imageForm drawOnTexture: self canvasTexture.
 	self canvasTexture needsUpdate: true.
+	
+	textureNeedsUpdate := false.
 ]
 
 { #category : #accessing }
@@ -241,5 +163,5 @@ XRMorphPanel >> worldToMorph: aVector3 [
 	| localPoint |
 	localPoint := (self threeObject worldToLocal: aVector3) asVector.
 	localPoint /= self scale.
-	^ localPoint * self morph extent
+	^ localPoint * (self morph extent @ 1)
 ]

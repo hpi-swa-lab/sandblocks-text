@@ -157,6 +157,12 @@ XRObject >> threeObject [
 		threeObject]
 ]
 
+{ #category : #private }
+XRObject >> threeObject: aThreeObject [
+
+	threeObject := aThreeObject
+]
+
 { #category : #accessing }
 XRObject >> world [
 
