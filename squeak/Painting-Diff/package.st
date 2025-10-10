@@ -1,4 +1,4 @@
 Package {
-	#name : #oRAGle,
+	#name : #'Painting-Diff',
 	#'squeak_changestamp' : true
 }

@@ -1,4 +1,4 @@
 Package {
-	#name : #oRAGle,
+	#name : #'Painting-Editor',
 	#'squeak_changestamp' : true
 }

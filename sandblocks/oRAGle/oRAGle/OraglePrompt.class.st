@@ -133,6 +133,21 @@ OraglePrompt >> defaultNumberOfOutputs: anInteger [
 
 {
 	#category : #private,
+	#'squeak_changestamp' : 'tobe 2/16/2024 15:01'
+}
+OraglePrompt >> generateOutputs [
+
+	approvedPrice ifNotNil:
+		[| price |
+		(price := self priceToGenerateOutputs maxCents) >5 ifTrue:
+			[self notify: ('about to spend {1}' format: {price})].
+		approvedPrice := 0].
+	replies := self newConversation
+		getAssistantMessages: self defaultNumberOfOutputs.
+]
+
+{
+	#category : #private,
 	#'squeak_changestamp' : 'ct 2/16/2024 19:47'
 }
 OraglePrompt >> generateReplies: number [
