@@ -1713,6 +1713,17 @@ PNode >> borderVertices [
 		last right + endLevel right @ self bottom}
 ]
 
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/21/2024 18:03'
+}
+PNode >> childBefore [
+
+	^ self baseParent baseChildren
+		at: self baseSiblingIndex - 1
+		ifAbsent: [nil]
+]
+
 { #category : #'as yet unclassified' }
 PNode >> childNodes [
 
@@ -2845,14 +2856,17 @@ PNode >> queryChildrenFirst: aString [
 	^ nil
 ]
 
-{ #category : #'as yet unclassified' }
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/21/2024 17:58'
+}
 PNode >> queryFirst: aString [
 
 	aString isString ifFalse: [^ DCQuery script: aString firstDeep: self].
 	
 	self assert: (aString includes: $@) description: 'query needs a capture (@) to be useful'.
 	
-	self allChildrenDo: [:block |
+	self allBaseChildrenDo: [:block |
 		block isTSMorph ifTrue: [
 			(SBTSQuery new
 				prepare: aString;

@@ -15,6 +15,39 @@ Class {
 
 {
 	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 10/10/2025 16:51'
+}
+PEditorState class >> example [
+
+	| e removeIndentExt testExt |
+	removeIndentExt := PExtension new
+		registerReplacement: (PReplacementDefinition new
+			name: 'indent';
+			model: PWhitespaceParser;
+			query: {[:x | x type = #tab and: [x childBefore type = #newline]]};
+			init: [:node :replacement | replacement extent: 0 @ 0] update: [:node :replacement |]).
+
+	testExt := PExtension new
+		registerReplacement: (PReplacementDefinition new
+			name: 'test';
+			model: SBJavascript;
+			query: {[:x | x type = #program]};
+			init: [:node :replacement | replacement addMorphBack: (replacement createShard extensions: [{removeIndentExt}])]
+			update: [:node :replacement | replacement firstSubmorph nodes: {(node queryFirst: '(method_definition) @')}]).
+
+	e := PEditorState new.
+	e rootShard extensions: [{testExt}].
+	e sourceString: 'class A {
+		constructor() {
+			console.log("b");
+		}
+	}'.
+
+	e rootShard openInHand
+]
+
+{
+	#category : #'as yet unclassified',
 	#'squeak_changestamp' : 'tobe 4/16/2024 08:30'
 }
 PEditorState >> adjustIndex: aNumber forChangeList: aCollection sideAffinity: anotherNumber [
@@ -239,7 +272,7 @@ PEditorState >> sourceString [
 
 {
 	#category : #accessing,
-	#'squeak_changestamp' : 'tobe 4/20/2024 06:56'
+	#'squeak_changestamp' : 'tobe 9/26/2024 13:24'
 }
 PEditorState >> sourceString: aString [
 
@@ -250,12 +283,5 @@ PEditorState >> sourceString: aString [
 		as: Dictionary.
 	rootShard nodes: {models at: PBaseParser}.
 	
-	SBVariant
-		named: 'applyChanges:force:'
-		associations: {
-			'with' -> [self applyChanges: {PChange range: self range insert: aString} force: true].
-			'without' -> []}
-		activeIndex: 2
-		id: 'd49ab18e-5c1d-4597-86c3-de48065fb1bf'
-		isActive: true
+	
 ]

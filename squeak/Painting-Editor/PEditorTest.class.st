@@ -148,57 +148,45 @@ PEditorTest >> testEnterChangeAtStart [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
+	#'squeak_changestamp' : 'tobe 9/26/2024 13:23'
 }
 PEditorTest >> testFindChange [
 
 	| change |
-	change := SBExampleWatch
-		report: (PShard new findChange: 'ab' b: 'acb' preferredPos: 1 preferredSide: nil)
-		for: 600362803
-		modifying: [:each | each].
+	change := PShard new findChange: 'ab' b: 'acb' preferredPos: 1 preferredSide: nil.
 	self assert: ({#from -> 2. #to -> 2. #insert -> 'c'} as: Dictionary) equals: change
 ]
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
+	#'squeak_changestamp' : 'tobe 9/26/2024 13:23'
 }
 PEditorTest >> testFindChangeAtEnd [
 
 	| change |
-	change := SBExampleWatch
-		report: (PShard new findChange: 'ab' b: 'abc' preferredPos: 1 preferredSide: nil)
-		for: 600362803
-		modifying: [:each | each].
+	change := PShard new findChange: 'ab' b: 'abc' preferredPos: 1 preferredSide: nil.
 	self assert: ({#from -> 3. #to -> 3. #insert -> 'c'} as: Dictionary) equals: change
 ]
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
+	#'squeak_changestamp' : 'tobe 9/26/2024 13:23'
 }
 PEditorTest >> testFindChangeDelete [
 
 	| change |
-	change := SBExampleWatch
-		report: (PShard new findChange: 'acb' b: 'ab' preferredPos: 1 preferredSide: nil)
-		for: 600362803
-		modifying: [:each | each].
+	change := PShard new findChange: 'acb' b: 'ab' preferredPos: 1 preferredSide: nil.
 	self assert: ({#from -> 2. #to -> 3. #delete -> 'c'} as: Dictionary) equals: change
 ]
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/20/2024 08:24'
+	#'squeak_changestamp' : 'tobe 9/26/2024 13:23'
 }
 PEditorTest >> testFindChangeDeleteAtEnd [
 
 	| change |
-	change := SBExampleWatch
-		report: (PShard new findChange: 'abc' b: 'ab' preferredPos: 1 preferredSide: nil)
-		for: 600362803
-		modifying: [:each | each].
+	change := PShard new findChange: 'abc' b: 'ab' preferredPos: 1 preferredSide: nil.
 	self assert: ({#from -> 3. #to -> 4. #delete -> 'c'} as: Dictionary) equals: change
 ]
 
@@ -408,6 +396,34 @@ PEditorTest >> testRejectedChangesIndex [
 	self assert: {'3124'. '3124'} equals: ((e shards reject: [:s | s = e rootShard])
 		collect: [:s | s view text string]
 		as: Array)
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 4/21/2024 18:07'
+}
+PEditorTest >> testRemoveIndent [
+
+	| removeIndentExt testExt e |
+	removeIndentExt := PExtension new registerReplacement: (PReplacementDefinition new
+		name: 'indent';
+		model: PWhitespaceParser;
+		query: {[:x | x type = #tab and: [x childBefore type = #newline]]};
+		init: [:node :replacement | replacement extent: 0 @ 0]
+			update: [:node :replacement | ]).
+	testExt := PExtension new registerReplacement: (PReplacementDefinition new
+		name: 'test';
+		model: SBJavascript;
+		query: {[:x | x type = #program]};
+		init: [:node :replacement | replacement addMorphBack: (replacement createShard extensions: [{removeIndentExt}])]
+			update: [:node :replacement | replacement firstSubmorph nodes: {node queryFirst: '(method_definition) @'}]).
+	e := PEditorState new.
+	e rootShard extensions: [{testExt}].
+	e sourceString: 'class A {
+	constructor() {
+		console.log("b");
+	}
+}'
 ]
 
 {
