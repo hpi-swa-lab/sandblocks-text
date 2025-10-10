@@ -30,7 +30,8 @@ export const slider = (model) =>
         [(it) => it.value, capture("value")],
       ),
     ]),
-    view: ({ min, max, step, value }) => {
+    view: ({ min, max, step, value, replacement }) => {
+      useValidateKeepReplacement(replacement);
       return h(
         "span",
         {},

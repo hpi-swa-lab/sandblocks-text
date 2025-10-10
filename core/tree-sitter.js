@@ -283,7 +283,6 @@ export class TreeSitterLanguage extends SBLanguage {
   }
 
   needsParenthesesInPosition(str, node) {
-    debugger;
     return false;
   }
 

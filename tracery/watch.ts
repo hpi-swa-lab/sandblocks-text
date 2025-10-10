@@ -75,16 +75,6 @@ export const watch = (model) => ({
         }}
       />
       <div style=${{ color: "#fff", display: "flex", marginTop: "0.25rem" }}>
-        <div
-          style=${{
-            padding: "0.1rem 0.4rem",
-            marginRight: "0.25rem",
-            background: "#999",
-            borderRadius: "100px",
-          }}
-        >
-          ${count}
-        </div>
         ${lastValue}
       </div>
     </div>`;
