@@ -1,3 +1,5 @@
+import { last, takeWhile } from "../utils.js";
+
 export function match(makeScript) {
   return (it) => {
     return metaexec(it, makeScript);

@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "../../external/preact-hooks.mjs";
-import { match, nodesWithWhitespace, query } from "../../core/query.js";
+import {
+  debugIt,
+  match,
+  nodesWithWhitespace,
+  query,
+} from "../../core/query.js";
 import { randomId, objectToString } from "../../utils.js";
 import { h, html } from "../../view/widgets.js";
 import {
@@ -9,13 +14,6 @@ import {
 } from "../vitrail.ts";
 import { SBNode } from "../../core/model.js";
 import { languageFor } from "../../core/languages.js";
-
-export function wrapWithWatch(node) {
-  const url = `${window.location.origin}/sb-watch`;
-  const headers = `headers: {"Content-Type": "application/json"}`;
-  const opts = `{method: "POST", body: JSON.stringify({id: ${randomId()}, e}), ${headers},}`;
-  node.wrapWith(`["sbWatch",((e) => (fetch("${url}", ${opts}), e))(`, `),][1]`);
-}
 
 export const watch = (model) => ({
   type: "replace" as const,
@@ -61,13 +59,6 @@ export const watch = (model) => ({
     </div>`;
   },
 });
-
-const jsQuery = `["viWatch", ((e) => (
-  fetch("https://localhost:3000/sb-watch", {
-    method: "POST",
-    body: JSON.stringify({ id: $identifier, e }),
-    headers: { "Content-Type": "application/json" },
-  }), e))($$$expressions),][1]`;
 
 const USE_LOCAL_JS = true;
 export const invisibleWatchRewrite = (model) => ({

@@ -119,10 +119,11 @@ export const useTagNode = (
   const updateAugmentations = () =>
     queueMicrotask(() => {
       v._augmentationsCheckedTrees.clear();
-      v.updateAugmentations(
-        new EditBuffer([new UpdateOp(node, node!.text)]),
-        [],
-      );
+      if (node.connected)
+        v.updateAugmentations(
+          new EditBuffer([new UpdateOp(node, node!.text)]),
+          [],
+        );
     });
   useEffect(() => {
     if (!node) return;
@@ -1114,8 +1115,8 @@ export function changesIntendToDeleteNode(
   changes: ReversibleChange<any>[],
   node: SBNode,
 ) {
-  return changes.some(
-    (c) => c.intentDeleteNodes?.some((n) => n.contains(node)),
+  return changes.some((c) =>
+    c.intentDeleteNodes?.some((n) => n.contains(node)),
   );
 }
 
