@@ -685,3 +685,54 @@ export async function evalModule(node, transformCb) {
     "data:text/javascript;charset=utf-8;base64," + btoa(source)
   );
 }
+
+export function objectToString(
+  obj,
+  depth = 1,
+  first = false,
+  hidePrivate = true,
+) {
+  if (obj == null) {
+    return "❌";
+  }
+
+  if (obj == true) {
+    return "✅";
+  }
+
+  if (Array.isArray(obj)) {
+    return (
+      "[" + obj.map((it) => objectToString(it, depth, first, hidePrivate)) + "]"
+    );
+  }
+
+  if (obj.sourceString !== undefined) {
+    return obj.sourceString;
+  }
+
+  if (obj.toString() != "[object Object]") {
+    return obj.toString();
+  }
+
+  const keys = Object.keys(obj)
+    .filter((key) => (hidePrivate ? key[0] != "_" : true))
+    .filter((key) => key != "id");
+
+  return (
+    (keys.length > 1 && !first ? "(" : "") +
+    keys
+      .map((key) =>
+        depth > 0
+          ? `${key}: ${objectToString(obj[key], depth - 1)}`
+          : `${key}: ${
+              obj[key].sourceString === undefined
+                ? obj[key]
+                : obj[key].sourceString
+            }`,
+      )
+      .map((string) => string + ", ")
+      .toString()
+      .slice(0, -2) +
+    (keys.length > 1 && !first ? ")" : "")
+  );
+}

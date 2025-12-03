@@ -50,7 +50,7 @@ import {
   Facet,
   ViewPlugin,
   EditorSelection,
-} from "../codemirror6/external/codemirror.bundle.js";
+} from "../external/codemirror6/codemirror.bundle.js";
 import {
   rangeShift,
   parallelToSequentialChanges,
@@ -63,7 +63,7 @@ import {
 import { h, render } from "../external/preact.mjs";
 import { useEffect, useRef } from "../external/preact-hooks.mjs";
 import { useSignal, useSignalEffect } from "../external/preact-signals.mjs";
-import { Vim, getCM } from "../codemirror6/external/codemirror-vim.mjs";
+import { Vim, getCM } from "../external/codemirror6/codemirror-vim.mjs";
 import { Pane } from "./pane.ts";
 
 appendCss(
@@ -250,10 +250,8 @@ async function codeMirror6WithVitrail(
           (e, view) => {
             const ranges = view.state.field(replacementsField);
             const pos = view.posAtDOM(e.target);
-            ranges.between(
-              pos,
-              pos,
-              (_, __, node) => node.spec.eventHandlers?.[name]?.(e),
+            ranges.between(pos, pos, (_, __, node) =>
+              node.spec.eventHandlers?.[name]?.(e),
             );
           },
         ]),

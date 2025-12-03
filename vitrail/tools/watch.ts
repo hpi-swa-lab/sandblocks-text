@@ -1,33 +1,14 @@
+import { useEffect, useMemo, useState } from "../../external/preact-hooks.mjs";
+import { match, nodesWithWhitespace, query } from "../../core/query.js";
+import { randomId, objectToString } from "../../utils.js";
+import { h, html } from "../../view/widgets.js";
 import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "../external/preact-hooks.mjs";
-import { withSocket } from "./host.js";
-import {
-  all,
-  debugIt,
-  match,
-  metaexec,
-  nodesWithWhitespace,
-  query,
-  replace,
-} from "../sandblocks/query-builder/functionQueries.js";
-import { randomId } from "../utils.js";
-import { h, html } from "../view/widgets.js";
-import {
-  Augmentation,
-  SelectionInteraction,
   VitrailPane,
   useTagNode,
   useValidateKeepReplacement,
-} from "../vitrail/vitrail.ts";
-import { objectToString } from "./query-builder.ts";
-import { SBNode } from "../core/model.js";
-import { useSignal } from "../external/preact-signals.mjs";
-import { Explorer } from "./explorer.ts";
-import { languageFor } from "../core/languages.js";
+} from "../vitrail.ts";
+import { SBNode } from "../../core/model.js";
+import { languageFor } from "../../core/languages.js";
 
 export function wrapWithWatch(node) {
   const url = `${window.location.origin}/sb-watch`;
@@ -88,6 +69,7 @@ const jsQuery = `["viWatch", ((e) => (
     headers: { "Content-Type": "application/json" },
   }), e))($$$expressions),][1]`;
 
+const USE_LOCAL_JS = true;
 export const invisibleWatchRewrite = (model) => ({
   name: "invisible-watch",
   type: "rewrite" as const,
@@ -101,18 +83,24 @@ export const invisibleWatchRewrite = (model) => ({
         node.language === languageFor("javascript") ||
         node.language === languageFor("typescript")
       ) {
-        const url = `${window.location.origin}/sb-watch`;
-        const headers = `headers: {"Content-Type": "application/json"}`;
-        const opts = `{method: "POST", body: JSON.stringify({id: ${id}, e}), ${headers},}`;
-        const prefix = `["viWatch",((e) => (fetch("${url}", ${opts}), e))(`;
-        const suffix = `),][1]`;
-
-        if (node.parent.type === "formal_parameter") {
-          node.parent.parent
-            .firstOfType("statement_block")
-            .insert(0, "statement", `${prefix}${node.text}${suffix}`);
-        } else {
+        if (USE_LOCAL_JS) {
+          const prefix = `["viWatch",((e) => (window.sbWatch(e, '${id}')))(`;
+          const suffix = `),][1]`;
           node.wrapWith(prefix, suffix);
+        } else {
+          const url = `${window.location.origin}/sb-watch`;
+          const headers = `headers: {"Content-Type": "application/json"}`;
+          const opts = `{method: "POST", body: JSON.stringify({id: ${id}, e}), ${headers},}`;
+          const prefix = `["viWatch",((e) => (fetch("${url}", ${opts}), e))(`;
+          const suffix = `),][1]`;
+
+          if (node.parent.type === "formal_parameter") {
+            node.parent.parent
+              .firstOfType("statement_block")
+              .insert(0, "statement", `${prefix}${node.text}${suffix}`);
+          } else {
+            node.wrapWith(prefix, suffix);
+          }
         }
       } else if (node.language === languageFor("python")) {
         node.wrapWith(
@@ -147,34 +135,6 @@ export function useRuntimeValues(
   }, [id, onValue]);
 }
 
-export const testLogs = (model) =>
-  <Augmentation<any>>{
-    name: "test-logs",
-    type: "insert" as const,
-    insertPosition: "end",
-    match: (node) =>
-      metaexec(node, (capture) => [
-        query("console.log($expression, $$$rest)"),
-        (it) => it.expression,
-        replace(capture),
-      ]),
-    matcherDepth: 3,
-    model,
-    view: ({ nodes }) => {
-      const lastValue = useSignal("");
-      useRuntimeValues(nodes[0], (v) => (lastValue.value = v));
-      return lastValue.value
-        ? h(Explorer, {
-            obj: lastValue.value,
-            style: { display: "inline-block" },
-          })
-        : null;
-    },
-  };
-
-withSocket((socket) =>
-  socket.on("sb-watch", ({ id, e }) => (window as any).sbWatch(e, id)),
-);
 (window as any).sbWatch = function (value, id) {
   (window as any).sbWatch.registry.get(id)?.(value);
   return value;
