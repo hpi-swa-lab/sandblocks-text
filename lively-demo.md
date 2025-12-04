@@ -1,29 +1,28 @@
 # Hello CodeMirror!
 
 <script>
-  import { languageFor } from "../core/languages.js";  
+  import { languageFor } from "./core/languages.js";  
   import {
     all,
     metaexec,
     optional,
     spawnArray,
     replace,
-  } from "../sandblocks/query-builder/functionQueries.js";
+  } from "./core/query.js";
 
   import {
     VitrailPaneWithWhitespace,
     useValidateKeepReplacement,
-  } from "./vitrail.ts";
+  } from "./vitrail/vitrail.ts";
 
-  import {setConfig} from "../core/config.js"
+  import {setConfig} from "./core/config.js"
 
-  import { h } from "../external/preact.mjs";
+  import { h } from "./external/preact.mjs";
 
   var baseDir = lively.query(this, "lively-container").getDir()
   setConfig({baseURL: baseDir + '../'})
 
-
-  import {addVitrailToLivelyEditor} from './lively.js';
+  import {addVitrailToLivelyEditor} from './vitrail/lively.js';
 
 </script>
 

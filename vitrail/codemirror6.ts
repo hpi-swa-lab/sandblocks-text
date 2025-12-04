@@ -1,5 +1,4 @@
 import {
-  Augmentation,
   Change,
   PaneFetchAugmentationsFunc,
   AugmentationInstance,
@@ -12,7 +11,6 @@ import {
 import {
   EditorView,
   indentWithTab,
-  javascript,
   autocompletion,
   highlightSpecialChars,
   history,
@@ -54,7 +52,6 @@ import {
 import {
   rangeShift,
   parallelToSequentialChanges,
-  arrayEqual,
   withDo,
   rangeContains,
   appendCss,
@@ -100,42 +97,6 @@ export const baseCMExtensions = [
     indentWithTab,
   ]),
 ];
-
-export function createJavaScriptCodeMirror(
-  text: string,
-  parent: HTMLElement,
-  fetchAugmentations: PaneFetchAugmentationsFunc<EditorView>,
-  cmExtensions: any[] = [],
-) {
-  return createDefaultCodeMirror(text, parent, fetchAugmentations, [
-    javascript(),
-    ...cmExtensions,
-  ]);
-}
-
-export async function createDefaultCodeMirror(
-  text: string,
-  parent: HTMLElement,
-  fetchAugmentations: PaneFetchAugmentationsFunc<EditorView>,
-  cmExtensions: any[] = [],
-) {
-  const cm = new EditorView({
-    doc: text,
-    extensions: [
-      ...baseCMExtensions,
-      history(),
-      highlightActiveLineGutter(),
-      ...cmExtensions,
-    ],
-    parent,
-  });
-
-  const vitrail = await codeMirror6WithVitrail(cm, fetchAugmentations, [
-    ...baseCMExtensions,
-    ...cmExtensions,
-  ]);
-  return vitrail;
-}
 
 class CodeMirrorReplacementWidget extends WidgetType {
   replacement: AugmentationInstance<any>;

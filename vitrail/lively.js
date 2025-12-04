@@ -1,17 +1,19 @@
 import { Vitrail, Pane, replacementRange } from "./vitrail.ts";
 
-export async function addVitrailToLivelyEditor(livelyCodeMirror, augmentations) {
+export async function addVitrailToLivelyEditor(
+  livelyCodeMirror,
+  augmentations,
+) {
   function paneFromLively(livelyCodeMirror, vitrail, fetchAugmentations) {
     if (!livelyCodeMirror.editor) livelyCodeMirror.editView("");
-    
+
     // lively.sleep(0).then(() => livelyCodeMirror.editor.refresh())
-    
+
     // lively.sleep(0).then(() => {
     //   // lively.warn("paneFromLively " + livelyCodeMirror.parentElement)
     //   // livelyCodeMirror.editor.refresh()
     // })
-    
-    
+
     const cm = livelyCodeMirror.editor;
     const markers = new Map();
 
@@ -55,8 +57,8 @@ export async function addVitrailToLivelyEditor(livelyCodeMirror, augmentations) 
         }
       },
       focusRange: (head, anchor) => {
-        console.log("focusRange")
-        window.timeStart = performance.now()
+        console.log("focusRange");
+        window.timeStart = performance.now();
         queueMicrotask(() => cm.focus());
         cm.setSelection(cm.posFromIndex(anchor), cm.posFromIndex(head));
       },
@@ -134,7 +136,6 @@ export async function addVitrailToLivelyEditor(livelyCodeMirror, augmentations) 
       const editor = document.createElement("lively-code-mirror");
       // Check if we are in Lively, otherwise attach an external CodeMirror
       if (!editor.editView) {
-        
         editor.editor = CodeMirror(editor, { value: "asd" });
         editor.editor.display.wrapper.style.height = "auto";
         onEnterDOM(editor, () => editor.editor.refresh());
