@@ -1,5 +1,5 @@
 // var loc = window.location.pathname;
-var dir = "/"; // loc.substring(0, loc.lastIndexOf("/")) + "/";
+var dir = "./"; // Use relative path for better portability
 
 export let config = {
   baseURL: dir,

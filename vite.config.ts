@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import path from 'path';
+import { cpSync } from 'fs';
 
 // Plugin to resolve .ts extensions in imports
 function resolveTsExtensions() {
@@ -17,8 +18,20 @@ function resolveTsExtensions() {
   };
 }
 
+// Plugin to copy external folder to dist/external
+function copyExternal() {
+  return {
+    name: 'copy-external',
+    closeBundle() {
+      cpSync('external', 'dist/external', { recursive: true });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [resolveTsExtensions()],
+  base: './',
+  publicDir: false,
+  plugins: [resolveTsExtensions(), copyExternal()],
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs'],
   },
@@ -29,5 +42,17 @@ export default defineConfig({
   build: {
     target: 'esnext',
     sourcemap: true,
+    lib: {
+      entry: {
+        lib: 'lib.ts',
+      },
+      formats: ['es'],
+      fileName: () => `sandblocks.js`,
+    },
+    rollupOptions: {
+      external: (id) => {
+        return id.includes('/external/');
+      },
+    },
   },
 });

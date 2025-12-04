@@ -6,3 +6,5 @@ localhost-key.pem
 localhost.pem
 vitrail/planner.js
 build
+dist/
+.options/
