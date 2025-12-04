@@ -1,11 +1,8 @@
-import { SBBlock, SBLanguage, SBText } from "../core/model.js";
-import { h } from "../external/preact.mjs";
-import { metaexec } from "../sandblocks/query-builder/functionQueries.js";
-import { nodesSourceString } from "../utils.js";
-import {
-  DeletionInteraction,
-  SelectionInteraction,
-} from "../vitrail/vitrail.ts";
+import { SBBlock, SBLanguage, SBText } from "../../core/model.js";
+import { h } from "../../external/preact.mjs";
+import { metaexec } from "../../core/query.js";
+import { nodesSourceString } from "../../utils.js";
+import { DeletionInteraction, SelectionInteraction } from "../vitrail.ts";
 
 class _SBWhitespaceModel extends SBLanguage {
   constructor() {

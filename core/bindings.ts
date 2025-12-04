@@ -1,14 +1,14 @@
-import { SBBlock } from "../../core/model.js";
-import { useEffect, useRef } from "../../external/preact-hooks.mjs";
-import { h } from "../../external/preact.mjs";
-import { Side, findChange, last, rangeShift } from "../../utils.js";
+import { SBBlock } from "./model.js";
+import { useEffect, useRef } from "../external/preact-hooks.mjs";
+import { h } from "../external/preact.mjs";
+import { Side, findChange, last, rangeShift } from "../utils.js";
 import {
   mapIndexToGlobal,
   markInputEditableForNode,
   remapIndices,
   remapIndicesReverse,
-} from "../../view/focus.ts";
-import { applyStringChange, Change } from "../../vitrail/vitrail.ts";
+} from "../view/focus.ts";
+import { applyStringChange, Change } from "../vitrail/vitrail.ts";
 
 export function bindSourceString(node: SBBlock) {
   const [text, range] = node.editor.nodeTextWithPendingChanges([node]);

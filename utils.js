@@ -736,3 +736,12 @@ export function objectToString(
     (keys.length > 1 && !first ? ")" : "")
   );
 }
+
+export function safeEval(string) {
+  try {
+    return eval(string);
+  } catch (error) {
+    console.log(error);
+    return undefined;
+  }
+}

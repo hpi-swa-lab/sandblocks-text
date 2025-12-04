@@ -1,19 +1,19 @@
-import { languageFor } from "../core/languages.js";
-import { useMemo } from "../external/preact-hooks.mjs";
-import { h } from "../external/preact.mjs";
+import { languageFor } from "../../core/languages.js";
+import { useMemo } from "../../external/preact-hooks.mjs";
+import { h } from "../../external/preact.mjs";
 import {
   first,
   languageSpecific,
   metaexec,
   replace,
-} from "../sandblocks/query-builder/functionQueries.js";
-import { markInputEditableForNode } from "../view/focus.ts";
+} from "../../core/query.js";
+import { markInputEditableForNode } from "../../view/focus.ts";
 import {
   SelectionInteraction,
   changesIntendToDeleteNode,
   useValidateKeepReplacement,
   useValidator,
-} from "./vitrail.ts";
+} from "../vitrail.ts";
 
 export function createPlaceholder(label: string) {
   return "__VI_PLACEHOLDER_" + label.replace(/ /g, "_");

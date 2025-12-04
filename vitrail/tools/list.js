@@ -3,9 +3,9 @@ import {
   useRef,
   useState,
   useMemo,
-} from "../external/preact-hooks.mjs";
-import { appendCss, last, sequenceMatch, withDo } from "../utils.js";
-import { codicon, h } from "../view/widgets.js";
+} from "../../external/preact-hooks.mjs";
+import { appendCss, last, sequenceMatch, withDo } from "../../utils.js";
+import { codicon, h } from "../../view/widgets.js";
 
 function highlightSubstring(string, search) {
   if (!search) return string;

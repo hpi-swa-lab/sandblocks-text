@@ -1,5 +1,5 @@
-import { languageFor } from "../core/languages.js";
-import { SBBaseLanguage } from "../core/model.js";
+import { languageFor } from "../../core/languages.js";
+import { SBBaseLanguage } from "../../core/model.js";
 import {
   all,
   first,
@@ -8,8 +8,8 @@ import {
   replace,
   spawnArray,
   type,
-} from "../sandblocks/query-builder/functionQueries.js";
-import { truncateString, withDo } from "../utils.js";
+} from "../../core/query.js";
+import { truncateString, withDo } from "../../utils.js";
 
 function matchClassMember(node) {
   return metaexec(node, (capture) => [

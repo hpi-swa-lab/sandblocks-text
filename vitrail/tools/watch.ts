@@ -75,7 +75,7 @@ export const invisibleWatchRewrite = (model) => ({
         node.language === languageFor("typescript")
       ) {
         if (USE_LOCAL_JS) {
-          const prefix = `["viWatch",((e) => (window.sbWatch(e, '${id}')))(`;
+          const prefix = `["viWatch",((e) => (window.sbWatch(e, ${id})))(`;
           const suffix = `),][1]`;
           node.wrapWith(prefix, suffix);
         } else {

@@ -1,19 +1,17 @@
-import { useSignal } from "../external/preact-signals.mjs";
-import { h } from "../external/preact.mjs";
+import { useSignal } from "../../external/preact-signals.mjs";
+import { h } from "../../external/preact.mjs";
 import {
   all,
   captureAll,
   match,
   nodesWithWhitespace,
   query,
-} from "../sandblocks/query-builder/functionQueries.js";
+} from "../../core/query.js";
 import {
   Augmentation,
-  SelectionInteraction,
-  useOnSelectReplacement,
   useValidateKeepReplacement,
   VitrailPane,
-} from "../vitrail/vitrail.ts";
+} from "../vitrail.ts";
 import { useRuntimeValues } from "./watch.ts";
 
 export const slider = (model) =>
@@ -54,7 +52,7 @@ export const color = (model) =>
     name: "color",
     model,
     match: match((capture) => [
-      query(`["color", $r, $g, $b, $a]`),
+      query(`["color", $r, $g, $b]`),
       all(
         [(it) => it.r, nodesWithWhitespace, capture("r")],
         [(it) => it.g, nodesWithWhitespace, capture("g")],
@@ -102,33 +100,5 @@ export const color = (model) =>
           // oninput: (e) => value.replaceWith(e.target.value),
         }),
       );
-    },
-  };
-
-export const spreadsheet = (model) =>
-  <Augmentation<any>>{
-    type: "replace" as const,
-    name: "spreadsheet-value",
-    model,
-    selectionInteraction: SelectionInteraction.StartAndEnd,
-    match: match((capture) => [
-      query(`["formula", $value][1]`),
-      captureAll(capture),
-    ]),
-    view: ({ value, replacement }) => {
-      useValidateKeepReplacement(replacement);
-
-      const expanded = useSignal(false);
-
-      const cellValue = useSignal("<waiting>");
-      useOnSelectReplacement(() => (expanded.value = !expanded.value));
-      useRuntimeValues(value, (val) => (cellValue.value = val));
-
-      return expanded.value
-        ? h(VitrailPane, {
-            nodes: [value],
-            hostOptions: { onBlur: () => (expanded.value = false) },
-          })
-        : h("span", {}, cellValue.value);
     },
   };
