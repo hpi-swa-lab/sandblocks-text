@@ -595,6 +595,7 @@ export function replaceRange(str, [start, end], replacement) {
 
 export function appendCss(text, parent) {
   const style = document.createElement("style");
+  style.setAttribute("data-sandblocks-css", "true");
   style.textContent = text;
   (parent ?? document.head).appendChild(style);
 }

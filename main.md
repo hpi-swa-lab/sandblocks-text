@@ -28,9 +28,13 @@ import {
   Browser,
 } from "./dist/sandblocks.js";
 
+// Create pane element first
+var pane = document.createElement('div');
 
-// Set base URL for module resolution
-setConfig({ baseURL: "http://localhost:9005/sandblocks-text-artifact/" });
+// Set base URL
+setConfig({
+  baseURL: "http://localhost:9005/sandblocks-text-artifact/"
+});
 
 
 function Demo() {
@@ -128,14 +132,22 @@ let color = ["color", baseline + 140, 3, ["slider", 0, 255, 1, 25][4]];`);
   ];
 }
 
-var pane = document.createElement('div');
-
-// Add CodeMirror CSS
-// var style = document.createElement('style');
-// style.textContent = await fetch('http://localhost:9005/sandblocks-text-artifact/dist/external/codemirror.css').then(r => r.text());
-// pane.appendChild(style);
-
 render(h(Demo), pane);
+
+// Copy sandblocks CSS into pane for shadow DOM compatibility
+document.querySelectorAll('style[data-sandblocks-css]').forEach(style => {
+  pane.appendChild(style.cloneNode(true));
+});
+
+// Copy CodeMirror 6 dynamically generated styles (they contain .ͼ classes)
+// We need to wait a bit for CodeMirror to inject its styles
+setTimeout(() => {
+  document.head.querySelectorAll('style').forEach(style => {
+    if (style.textContent.includes('.ͼ')) {
+      pane.appendChild(style.cloneNode(true));
+    }
+  });
+}, 100);
 
 pane
 </script>
