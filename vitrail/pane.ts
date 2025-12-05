@@ -234,9 +234,12 @@ export class Pane<T> {
     this.setText(v._rootPane.getText().slice(...this.range), false);
 
     // Initial augmentation matching for already-loaded models
-    for (const b of this._getInitEditBuffersForRoots([...v._models.values()]))
-      this.vitrail.updateAugmentations(b, [this]);
-    this.updateAugmentations();
+    // Defer to avoid blocking during page load and allow async initialization
+    setTimeout(() => {
+      for (const b of this._getInitEditBuffersForRoots([...v._models.values()]))
+        this.vitrail.updateAugmentations(b, [this]);
+      this.updateAugmentations();
+    }, 100);
 
     // asynchronous update
     this.loadMissingModels(v);

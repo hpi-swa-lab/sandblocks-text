@@ -6,28 +6,41 @@ export async function addVitrailToLivelyEditor(
   livelyCodeMirror,
   augmentations,
 ) {
+  // Ensure editor is initialized before proceeding
+  if (!livelyCodeMirror.editor) {
+    await livelyCodeMirror.editView("");
+  }
+
   function paneFromLively(livelyCodeMirror, vitrail, fetchAugmentations) {
-    if (!livelyCodeMirror.editor) livelyCodeMirror.editView("");
-    // lively.sleep(0).then(() => livelyCodeMirror.editor.refresh())
-
-    // lively.sleep(0).then(() => {
-    //   // lively.warn("paneFromLively " + livelyCodeMirror.parentElement)
-    //   // livelyCodeMirror.editor.refresh()
-    // })
-
     const cm = livelyCodeMirror.editor;
+    if (!cm) {
+      // Editor not ready yet, try to initialize
+      if (livelyCodeMirror.editView) {
+        livelyCodeMirror.editView("");
+      }
+    }
+
     const markers = new Map();
+
+    // Function to get cm safely (for shards that might not be ready)
+    const getCm = () => livelyCodeMirror.editor;
 
     const pane = new Pane({
       vitrail,
       view: livelyCodeMirror,
       host: livelyCodeMirror,
       fetchAugmentations,
-      getLocalSelectionIndices: () => [
-        cm.indexFromPos(cm.getCursor("from")),
-        cm.indexFromPos(cm.getCursor("to")),
-      ],
+      getLocalSelectionIndices: () => {
+        const cm = getCm();
+        if (!cm) return [0, 0];
+        return [
+          cm.indexFromPos(cm.getCursor("from")),
+          cm.indexFromPos(cm.getCursor("to")),
+        ];
+      },
       syncReplacements: () => {
+        const cm = getCm();
+        if (!cm) return;
         for (const replacement of pane.replacements) {
           const range = replacementRange(replacement, vitrail);
           if (markers.has(replacement)) {
@@ -58,12 +71,16 @@ export async function addVitrailToLivelyEditor(
         }
       },
       focusRange: (head, anchor) => {
+        const cm = getCm();
+        if (!cm) return;
         console.log("focusRange");
         window.timeStart = performance.now();
         queueMicrotask(() => cm.focus());
         cm.setSelection(cm.posFromIndex(anchor), cm.posFromIndex(head));
       },
       applyLocalChanges: function (changes) {
+        const cm = getCm();
+        if (!cm) return;
         for (const change of changes) {
           let from = cm.posFromIndex(change.from);
           let to = cm.posFromIndex(change.to);
@@ -71,12 +88,30 @@ export async function addVitrailToLivelyEditor(
         }
         this.syncReplacements();
       },
-      getText: () => cm.getValue(),
-      setText: (text) => cm.setValue(text),
-      hasFocus: () => cm.hasFocus(),
+      getText: () => {
+        const cm = getCm();
+        return cm ? cm.getValue() : "";
+      },
+      setText: (text) => {
+        const cm = getCm();
+        if (cm) cm.setValue(text);
+      },
+      hasFocus: () => {
+        const cm = getCm();
+        return cm ? cm.hasFocus() : false;
+      },
     });
 
-    cm.on("keydown", (cm, e) => {
+    // Setup CodeMirror event handlers
+    const setupCodeMirrorHandlers = () => {
+      const cm = getCm();
+      if (!cm) {
+        // If editor not ready, retry in a bit (for shard panes)
+        setTimeout(setupCodeMirrorHandlers, 10);
+        return;
+      }
+
+      cm.on("keydown", (cm, e) => {
       if (e.key === "ArrowLeft") {
         if (pane.moveCursor(false)) {
           e.preventDefault();
@@ -128,6 +163,10 @@ export async function addVitrailToLivelyEditor(
 
       v.applyChanges([change]);
     });
+    };
+
+    // Setup handlers (will retry if editor not ready yet)
+    setupCodeMirrorHandlers();
 
     return pane;
   }
@@ -140,6 +179,9 @@ export async function addVitrailToLivelyEditor(
         editor.editor = CodeMirror(editor, { value: "asd" });
         editor.editor.display.wrapper.style.height = "auto";
         onEnterDOM(editor, () => editor.editor.refresh());
+      } else {
+        // In Lively4, editView is async - call it and editor will be ready later
+        editor.editView("");
       }
       editor.classList.add("shard");
       editor.style = "display:inline-block; border: 1px solid gray";

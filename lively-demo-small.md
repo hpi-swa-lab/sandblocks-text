@@ -29,7 +29,7 @@
 
 <script>
 try {
-  
+
   let source = `var a = 3 + 4;`
 
   const editor = await (<lively-code-mirror style="width:800px; height: 500px; display: block"></lively-code-mirror>)
