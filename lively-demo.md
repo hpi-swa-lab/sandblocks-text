@@ -1,6 +1,7 @@
 # Hello CodeMirror!
 
 <script>
+
   import { languageFor } from "./core/languages.js";  
   import {
     all,
@@ -20,14 +21,12 @@
   import { h } from "./external/preact.mjs";
 
   var baseDir = lively.query(this, "lively-container").getDir()
-  setConfig({baseURL: baseDir + '../'})
+  setConfig({baseURL: baseDir + '/'})
 
   import {addVitrailToLivelyEditor} from './vitrail/lively.js';
-
 </script>
 
 <script>
-
 try {
   
 

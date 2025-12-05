@@ -1,4 +1,6 @@
-import { Vitrail, Pane, replacementRange } from "./vitrail.ts";
+import { Vitrail, replacementRange } from "./vitrail.ts";
+
+import { Pane} from "./pane.ts"
 
 export async function addVitrailToLivelyEditor(
   livelyCodeMirror,
@@ -6,7 +8,6 @@ export async function addVitrailToLivelyEditor(
 ) {
   function paneFromLively(livelyCodeMirror, vitrail, fetchAugmentations) {
     if (!livelyCodeMirror.editor) livelyCodeMirror.editView("");
-
     // lively.sleep(0).then(() => livelyCodeMirror.editor.refresh())
 
     // lively.sleep(0).then(() => {
