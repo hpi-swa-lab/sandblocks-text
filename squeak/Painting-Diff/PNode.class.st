@@ -24,7 +24,7 @@ Class {
 }
 
 {
-	#category : #parsing,
+	#category : #'parsing - tree-sitter',
 	#'squeak_changestamp' : 'tobe 4/15/2024 14:11'
 }
 PNode class >> addUncapturedTextTo: aNode in: aCursor language: aLanguage isLeaf: aBoolean [
@@ -50,87 +50,6 @@ PNode class >> addUncapturedTextTo: aNode in: aCursor language: aLanguage isLeaf
 			range: aCursor range)]
 ]
 
-{ #category : #cards }
-PNode class >> cardsCard [
-	<query: #always>
-
-	^ {
-		[:x | x language = SBCards].
-		[:x | x type = #card].
-		[:x |
-			x ensureReplacement: CardsCardContainer initDo: [:g |
-				g syncTextFrom: [:source | source childNodes first] to: g card name.
-				g embedMany: [:s | (s atType: #arguments) namedChildren] onChange: [:list | g card arguments: list].
-				g
-					embedMany: [:source |
-						source baseChildren
-							detect: [:c | c type = #resources]
-							ifFound: [:scope | scope namedChildren]
-							ifNone: [{}]]
-					onChange: [:list | g resources: list].
-				g
-					embedMany: [:source |
-						source baseChildren
-							detect: [:c | c type = #scope]
-							ifFound: [:scope | scope namedChildren]
-							ifNone: [{}]]
-					onChange: [:list | g scope: list]]]}
-]
-
-{ #category : #cards }
-PNode class >> cardsGroup [
-	<query: #always>
-
-	^ {
-		[:x | x language = SBCards].
-		[:x | x type = #group].
-		[:x |
-			x ensureReplacement: CardsGroup initDo: [:g |
-				g syncTextFrom: [:source | source childNodes second] to: g name.
-				g
-					embedMany: [:s | (s childNodes viewAllButFirst: 3 andLast: 1) select: [:n | n contents ~= '.']]
-					onChange: [:list |
-						g submorphs allButFirstDo: #delete.
-						g addAllMorphsBack: list]]]}
-]
-
-{ #category : #cards }
-PNode class >> cardsPool [
-	<query: #always>
-
-	^ {
-		[:x | x language = SBCards].
-		[:x | x type = #pool].
-		[:x | x ensureReplacement: CardsPool initDo: [:g | g addMorphBack: (g embed: [:s | s childNodes second])]]}
-]
-
-{ #category : #cards }
-PNode class >> cardsResources [
-	<query: #always>
-
-	^ {
-		[:x | x language = SBCards].
-		[:x | x type = #identifier and: [x parent type = #resources]].
-		[:x |
-			x
-				ensureReplacement: CardsCard
-				initDo: [:c | c syncTextFrom: [:source | source childNodes first] to: c name]]}
-]
-
-{ #category : #cards }
-PNode class >> cardsSequence [
-	<query: #always>
-
-	^ {
-		[:x | x language = SBCards].
-		[:x | x type = #sequence].
-		[:x |
-			x ensureReplacement: CardsSequence initDo: [:g |
-				g embedMany: #namedChildren onChange: [:list |
-					g removeAllMorphs.
-					g addAllMorphsBack: list]]]}
-]
-
 { #category : #'text modify' }
 PNode class >> deleteFrom: aString at: aNumber do: aBlock [
 
@@ -147,7 +66,7 @@ PNode class >> deleteFrom: aString at: aNumber do: aBlock [
 		value: [:source :block | self insert: deleted in: source at: aNumber do: block]
 ]
 
-{ #category : #parsing }
+{ #category : #'parsing - tree-sitter' }
 PNode class >> findChangeRangeFrom: original to: new [
 
 	| start end maxSize |
@@ -166,7 +85,7 @@ PNode class >> findChangeRangeFrom: original to: new [
 ]
 
 {
-	#category : #parsing,
+	#category : #'parsing - tree-sitter',
 	#'squeak_changestamp' : 'tobe 4/15/2024 14:11'
 }
 PNode class >> fromCursor: aCursor language: aLanguage [
@@ -195,26 +114,6 @@ PNode class >> fromCursor: aCursor language: aLanguage [
 				range: aCursor range]
 ]
 
-{ #category : #generic }
-PNode class >> genericAddMarker [
-	<query: #shortcut>
-
-	^ {
-		[:x | x registerShortcut: #addMarker do: [{[:block | block attachDecorator: SBMarkedDecorator new]}]]}
-]
-
-{ #category : #html }
-PNode class >> htmlCompleteTag [
-	<query: #type>
-
-	^ {
-		[:x | x language = SBHtml].
-		[:x | x isSelected].
-		[:x | x type = #'start_tag'].
-		[:x | {#args. (x childOfType: #'tag_name') contents. x}].
-		[:tagName :open | open insertAfter: ('</{1}>' format: {tagName})]}
-]
-
 { #category : #'text modify' }
 PNode class >> insert: aString in: aContainerString at: aNumber do: aBlock [
 
@@ -232,129 +131,14 @@ PNode class >> insert: aString in: aContainerString at: aNumber do: aBlock [
 		value: [:source :block | self deleteFrom: source at: aNumber do: block]
 ]
 
-{ #category : #javascript }
-PNode class >> jsExtractTableOfContents: aBlock into: aMorph toc: aReplacement [
-
-	(aBlock type = #'class_declaration' or: [aBlock type = #'function_declaration'])
-		ifTrue: [ | container |
-			container := self jsToCContainer.
-			container addMorphBack: (aReplacement embed: [:s | aBlock atField: #name]).
-			
-			aBlock children do: [:c | self jsExtractTableOfContents: c into: container toc: aReplacement].
-			
-			aMorph addMorphBack: container]
-		ifFalse: [aBlock children do: [:c | self jsExtractTableOfContents: c into: aMorph toc: aReplacement]]
-]
-
-{ #category : #javascript }
-PNode class >> jsTableOfContents [
-	<query: #always>
-
-	^ {
-		[:x | x language = SBJavascript].
-		[:x | x type = #program].
-		[:x | false].
-		[:x |
-			x
-				ensureReplacement: DCJsTableOfContents
-				initDo: [:toc | self jsExtractTableOfContents: x into: toc toc: toc]]}
-]
-
-{ #category : #'as yet unclassified' }
-PNode class >> jsToCContainer [
-
-	^ SBBlock new
-		layoutPolicy: TableLayout new;
-		hResizing: #shrinkWrap;
-		vResizing: #shrinkWrap;
-		layoutInset: 4;
-		yourself
-]
-
-{ #category : #parsing }
+{ #category : #'parsing - tree-sitter' }
 PNode class >> language: aLanguage [
 
 	^ self parse: '' language: aLanguage
 ]
 
-{ #category : #lsp }
-PNode class >> lspAutocompletion [
-	<query: #never>
-
-	^ {
-		[:x | x isSelected].
-		[:x | x containingArtefact languageSemanticsFor: x].
-		[:block :semantics | block isLeafIdentifier].
-		[:block :semantics |
-			block queryState
-				atData: #lspAutocompletion
-				get: [:add | (semantics loadSuggestionsFor: block) then: [:all | all do: add]]
-				newestDo: [:list | list addOwnSuggestions: list label: 'lsp']
-				oldDo: [:list | ]]}
-]
-
-{ #category : #lsp }
-PNode class >> lspDidChange [
-	<query: #type>
-
-	^ {
-		[:x | x isRootBlock].
-		[:x | x containingArtefact languageSemanticsFor: x].
-		[:block :semantics | semantics didChange: block containingArtefact]}
-]
-
-{ #category : #lsp }
-PNode class >> lspDidOpen [
-	<query: #open>
-
-	^ {
-		[:x | x isRootBlock].
-		[:x | x containingArtefact languageSemanticsFor: x].
-		[:block :semantics | semantics didOpen: block containingArtefact]}
-]
-
-{ #category : #lsp }
-PNode class >> lspHighlightUsages [
-	<query: #selection>
-
-	^ {
-		[:x | x isSelected].
-		[:x | x containingArtefact languageSemanticsFor: x].
-		[:block :semantics |
-			block queryState
-				atData: #lspHighlightUsages
-				gather: [:add | semantics usagesOf: block do: add]
-				newestDo: [:b | b containingSandblock attachDecorator: SBHighlightDecorator new]
-				oldDo: [:b | b detachDecorators: SBHighlightDecorator]]}
-]
-
-{ #category : #lsp }
-PNode class >> lspShowHover [
-	<query: #hover>
-
-	^ {
-		[:x | x containingArtefact languageSemanticsFor: x].
-		[:block :semantics | block isLeafIdentifier].
-		[:block :semantics |
-			semantics
-				hoverFor: block
-				do: [:contents | | hover |
-					contents ifNotEmpty: [ | cancel |
-						hover := SBTSHoverMorph new
-							morph: block;
-							contents: contents;
-							openInWorld;
-							reposition;
-							yourself.
-						cancel := [
-							hover deleteSoon.
-							block removeActionsSatisfying: [:a | a == cancel]].
-						block when: #mouseLeaveNextTick evaluate: cancel]]
-				blocking: false]}
-]
-
 {
-	#category : #parsing,
+	#category : #'parsing - tree-sitter',
 	#'squeak_changestamp' : 'tobe 4/15/2024 14:11'
 }
 PNode class >> maybeAddTrailingLineBreak: aBlock [
@@ -366,7 +150,7 @@ PNode class >> maybeAddTrailingLineBreak: aBlock [
 ]
 
 {
-	#category : #parsing,
+	#category : #'parsing - tree-sitter',
 	#'squeak_changestamp' : 'tobe 4/13/2024 14:24'
 }
 PNode class >> parse: aString language: aLanguage [
@@ -375,7 +159,7 @@ PNode class >> parse: aString language: aLanguage [
 ]
 
 {
-	#category : #parsing,
+	#category : #'parsing - tree-sitter',
 	#'squeak_changestamp' : 'tobe 4/13/2024 14:25'
 }
 PNode class >> parse: aString old: oldBlock language: aLanguage [
@@ -396,22 +180,24 @@ PNode class >> parse: aString old: oldBlock language: aLanguage [
 			yourself])
 ]
 
-{ #category : #parsing }
+{ #category : #'parsing - tree-sitter' }
 PNode class >> parseBlock: aString language: aLanguage [
 
 	^ self parse: aString old: nil language: aLanguage
 ]
 
-{ #category : #shortcuts }
-PNode class >> registerShortcuts: aProvider [
+{
+	#category : #'parsing - smalltalk',
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:00'
+}
+PNode class >> parseSt: aString [
 
-	aProvider cmdShortcut: $( do: #wrapInRoundParenthesis.
-	aProvider cmdShortcut: ${ do: #wrapInCurlyBraces.
-	aProvider cmdShortcut: $[ do: #wrapInSquareBrackets.
-	aProvider cmdShortcut: $' do: #wrapInSingleQuotes.
-	aProvider cmdShortcut: $" do: #wrapInDoubleQuotes.
-	aProvider cmdShortcut: $` do: #wrapInBackticks.
-	aProvider shortcut: $M command do: #addMarker
+	| node parser |
+	parser := Parser new.
+	node := parser parse: aString class: Object.
+	^ node accept: (PSmalltalkParser new
+		encoder: parser encoder;
+		source: aString)
 ]
 
 {
@@ -437,849 +223,6 @@ PNode class >> replace: aRange in: aContainerString with: aString do: aBlock [
 			newEndByte: aRange start index + aString size;
 			bytesToPointsIn: aString new: new)
 		value: [:source :block | self replace: (aRange withSize: newLength) in: source with: original do: block]
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkBabylonianBuildExample [
-	<query: #always>
-
-	^ {
-		[:x | true].
-		self smalltalkMessageSendSelector.
-		[:selector :message | selector = #example:args:label:].
-		[:selector :message |
-			message ensureReplacement: DCExample initDo: [:r |
-				r
-					addMorphBack: (r embed: [:s | s childNodes seventh]);
-					addMorphBack: (SBStringMorph new contents: 'self: ');
-					addMorphBack: (r embed: [:s | s childNodes third]);
-					addMorphBack: (SBStringMorph new contents: 'args: ');
-					addMorphBack: (r embed: [:s | s childNodes fifth])]]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkBabylonianExample [
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | x containingArtefact].
-		[:x | x class = DCSmalltalkMethod].
-		[:x |
-			x method childNodes
-				detect: [:node | node type = #statement and: [node childSandblocks first class = DCExample]]
-				ifFound: [:stmt | stmt childSandblocks first]
-				ifNone: [nil]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkBabylonianLivePreview [
-	<query: #selection>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | x isSelected].
-		[:x | x orParentExpression].
-		[:x | {#args. x. DCQuery script: self smalltalkBabylonianExample with: x}].
-		[:block :example | | source |
-			source := DCBlock
-				replace: block range
-				in: block containingArtefact method sourceString
-				with: '(', block sourceString, ') sbLivePreview'
-				do: [:s :edit :undo | s].
-			
-			([
-				(block containingArtefact methodClass newParser
-					parse: source
-					class: block containingArtefact methodClass
-					noPattern: false
-					notifying: nil
-					ifFail: nil) generateWithTempNames]
-				on: SyntaxErrorNotification
-				do: [nil]) ifNotNil: [:newMethod | | oldMethod popup |
-				oldMethod := block containingArtefact compiledMethod.
-				popup := block queryState
-					onDelete: #babylonianLivePreviewPopup do: #delete;
-					atData: #babylonianLivePreviewPopup ifAbsentPut: [SBPopup new].
-				popup removeAllMorphs.
-				[
-					oldMethod methodClass
-						addSelectorSilently: oldMethod selector
-						withMethod: newMethod.
-					[example run]
-						on: Error, Halt, TestFailure
-						do: [:err |
-							popup
-								addMorphBack: SBIcon iconBolt;
-								addMorphBack: (SBStringMorph new contents: (err printStringLimitedTo: 40))]
-						on: TimedOut
-						do: [
-							popup
-								addMorphBack: SBIcon iconClockO;
-								addMorphBack: (SBStringMorph new contents: 'timed out')]
-						on: SBStRunUntilValue
-						do: [:val |
-							popup
-								addMorphBack: SBIcon iconInfoCircle;
-								addMorphBack: (SBStringMorph new contents: val value printString)]] ensure: [newMethod methodClass addSelectorSilently: newMethod selector withMethod: oldMethod].
-				popup showBelow: block closeOnDeselect: false]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkBabylonianRunExample [
-	<query: #save>
-
-	^ {self smalltalkBabylonianExample. [:example | Project current addDeferredUIMessage: [example run]]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkBlockWithSelector [
-
-	^ {
-		[:x |
-			DCQuery
-				firstScript: {
-					self smalltalkMessageSend.
-					{[:b | b type = #symbol]}.
-					{[:b | b orParent: #(#'keyword_selector' #'binary_selector' #'unary_selector')]}}
-				with: x]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkBrowseClass [
-	<query: #shortcut>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | x type = #identifier].
-		[:x |
-			x
-				registerShortcut: #browse
-				do: [{self smalltalkDeclaration. [:id :decl | decl class = ClassBinding ifTrue: [decl value browse]]}]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkBrowseImplementors [
-	<query: #shortcut>
-
-	^ {
-		self smalltalkBlockWithSelector.
-		[:msg |
-			msg registerShortcut: #browseImplementors do: [
-				{
-					self smalltalkSelector.
-					[:selector :message | {#args. selector. self systemNavigation allImplementorsOf: selector asSymbol. message}].
-					[:selector :list :message |
-						(message sandblockEditor isSingleArtefactView or: [list size > 1])
-							ifTrue: [
-								(message sandblockEditor model notNil and: [message sandblockEditor model isKindOf: MessageTrace])
-									ifTrue: [
-										message sandblockEditor model
-											browseAllImplementorsOf: selector asSymbol
-											requestor: #modelMenu]
-									ifFalse: [message systemNavigation browseAllImplementorsOf: selector asSymbol]]
-							ifFalse: [message sandblockEditor open: list first compiledMethod]]}]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkBrowseReferences [
-	<query: #shortcut>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | x type = #identifier].
-		[:x |
-			x registerShortcut: #browseSenders do: [
-				{
-					self smalltalkDeclaration.
-					[:id :decl |
-						decl class = ClassBinding ifTrue: [self systemNavigation browseAllCallsOnClass: decl value].
-						decl isString ifTrue: [
-							self systemNavigation
-								browseAllAccessesTo: decl
-								from: x containingArtefact methodClass]]}]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkBrowseReferencesSend [
-	<query: #shortcut>
-
-	^ {
-		self smalltalkBlockWithSelector.
-		[:msg |
-			msg registerShortcut: #browseSenders do: [
-				{
-					self smalltalkSelector.
-					[:sel :message | {#args. message. sel. self systemNavigation allCallsOn: sel asSymbol}].
-					[:message :sel :calls |
-						(message sandblockEditor isSingleArtefactView or: [calls size > 1])
-							ifTrue: [
-								(message sandblockEditor model notNil and: [message sandblockEditor model isKindOf: MessageTrace])
-									ifTrue: [
-										message sandblockEditor model
-											browseAllCallsOn: sel asSymbol
-											requestor: #modelMenu]
-									ifFalse: [self systemNavigation browseAllCallsOn: sel asSymbol]]
-							ifFalse: [message sandblockEditor open: calls first compiledMethod]]}]]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkCascadedMessageSend [
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | #(#'keyword_message' #'binary_message' #'unary_message' #keyword #'binary_operator' #'unary_identifier') includes: x type].
-		[:x | x orParent: #(#'cascaded_keyword_message' #'cascaded_binary_message' #'cascaded_unary_message')]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkCheckbox [
-	<query: #always>
-
-	^ {
-		[:x | true].
-		[:x | x language = SBTSSmalltalk].
-		[:x | x isReplacement not].
-		[:x | {#true. #false} includes: x type].
-		[:x |
-			x ensureReplacement: DCCheckbox initDo: [:c |
-				c
-					fromSource: [:source :repl | repl checked: source contents = 'true']
-					toSource: [:source :repl | source contents: (repl checked ifTrue: ['true'] ifFalse: ['false'])]]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkCollapseBlocks [
-	<query: #open>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | x type = #block].
-		[:x | false].
-		[:x | x sourceString size > 30000000].
-		[:x | x installPassiveReplacement: DCCollapsed new]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkCollapseBlocksOnDoubleClick [
-	<query: #doubleClick>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | x type = #block].
-		[:x | x installPassiveReplacement: DCCollapsed new]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkCreateClassFor: aBlock [
-
-	aBlock sandblockEditor do: (SBStCreateClassCommand new
-		name: aBlock contents;
-		source: aBlock;
-		editor: aBlock sandblockEditor;
-		artefact: aBlock containingArtefact)
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkCreateNewMethod [
-	<query: #shortcut>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x |
-			x registerShortcut: #createNewEmptyModule do: [
-				{
-					[:e | | method |
-						method := DCSmalltalkMethod emptyIn: e containingArtefact methodClass.
-						method category: (e sandblockEditor class = SBBrowserEditor
-							ifTrue: [e sandblockEditor model selectedMessageCategoryName]
-							ifFalse: [nil]).
-						e sandblockEditor openMorphInView: method.
-						method firstDeepChild startInputAtEnd]}]]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkDeclaration [
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | x is: #(#identifier #'block_argument')].
-		[:id | {#args. id. id orAllParents: #(#method #block)}].
-		[:id :scopes | | decl |
-			decl := ((DCQuery
-				script: {
-					[:scope |
-						DCQuery
-							firstScript: {
-								{
-									[:block | "temporaries"
-									block childSandblocks detect: [:a | a type = #temporaries] ifNone: [nil]].
-									[:args | args childSandblocks detect: [:arg | arg contents = id contents] ifNone: [nil]]}.
-								{
-									[:block | "block args"
-									block childSandblocks select: [:a | a type = #'block_argument']].
-									[:args |
-										args
-											detect: [:arg | (arg contents withoutLeading: #($:)) = (id contents withoutLeading: #($:))]
-											ifNone: [nil]]}.
-								{
-									[:method |
-										"method args"
-										method queryFirst: {
-											[:x | x is: {#'binary_selector'. #'keyword_selector'}].
-											[:x | x children select: [:c | c is: #identifier]]}].
-									[:args | args detect: [:arg | arg contents = id contents] ifNone: [nil]]}}
-							with: scope]}
-				first: scopes) ifNil: [
-				(Symbol lookup: id contents) ifNotNil: [:sym |
-					id containingArtefact class = DCSmalltalkMethod
-						ifTrue: [
-							id containingArtefact methodClass
-								bindingOf: sym
-								environment: id containingArtefact methodClass environment]
-						ifFalse: [nil]]]) ifNil: [
-				id containingArtefact class = DCSmalltalkMethod
-					ifTrue: [
-						id containingArtefact methodClass allInstVarNames
-							detect: [:n | n = id contents]
-							ifNone: [nil]]
-					ifFalse: [nil]].
-			{#args. id. decl}]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkDeclareBlockLocal: aBlock [
-
-	self smalltalkDeclareTemporary: aBlock inScopes: #(block method)
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkDeclareClassVariable: aBlock [
-
-	aBlock sandblockEditor do: (SBStDeclareClassVarCommand new
-		class: aBlock containingArtefact methodClass theNonMetaClass;
-		name: aBlock contents;
-		source: aBlock)
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkDeclareInstanceVariable: aBlock [
-
-	aBlock sandblockEditor do: (SBStDeclareInstVarCommand new
-		class: aBlock containingArtefact methodClass;
-		name: aBlock contents;
-		source: aBlock)
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkDeclareTemporary: aBlock [
-
-		self smalltalkDeclareTemporary: aBlock inScopes: #(method)
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkDeclareTemporary: aBlock inScopes: aCollection [
-
-	| block decl |
-	decl := DCBlock new
-		type: #identifier;
-		language: SBTSSmalltalk;
-		addMorphBack: (DCText new contents: aBlock contents).
-	block := aBlock orAnyParent: aCollection.
-	block childSandblocks
-		detect: [:b | b type = #temporaries]
-		ifFound: [:temporaries |
-			temporaries
-				insert: (' {1} ' format: {decl sourceString})
-				atChildIndex: temporaries submorphCount]
-		ifNone: [ | index |
-			index := block children findFirst: [:s | s treeLabel = '|'].
-			block
-				insert: ('| {1} |' format: {decl sourceString})
-				atChildIndex: (index = 0 ifTrue: [2] ifFalse: [index + 1])]
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkEvaluateExpression [
-	<query: #shortcut>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x |
-			x registerShortcut: #evaluateExpression do: [
-				{
-					[:block | | result artefact |
-						artefact := block containingArtefact.
-						result := SBExecutionEnvironment value: artefact during: [
-							Compiler new
-								evaluate: block sourceString
-								in: artefact evaluationContext
-								to: (artefact evaluationContext
-									ifNil: [artefact evaluationReceiver]
-									ifNotNil: #receiver)
-								notifying: nil
-								ifFail: nil].
-						result explore]}]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkFlagMarker [
-	<query: #always>
-
-	^ {
-		self smalltalkMessageSendSelector.
-		[:selector :message | selector = #flag: and: [message children first type = #self and: [message children last type = #symbol]]].
-		[:selector :message |
-			message
-				ensureReplacement: DCFlagMarker
-				initDo: [:m | m addMorphBack: (m embed: [:s | s children last])]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkHighlightIdentifiers [
-	<query: #selection>
-
-	^ {
-		[:x | x isSelected].
-		self smalltalkDeclaration.
-		self smalltalkUsesOfDeclaration.
-		[:decl :identifiers | identifiers do: #attachHighlight]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkIdentifierAutocompletion [
-	<query: #type>
-
-	^ {
-		[:x | x isSelected].
-		[:x | x language = SBTSSmalltalk].
-		[:x | x type = #identifier].
-		[:x |
-			x
-				addOwnSuggestions: (Smalltalk globals declarations
-					collect: [:class | class key]
-					into: OrderedCollection new)
-				label: 'class'].
-		[:id | {#args. id. id orAllParents: #(#method #block)}].
-		[:id :scopes |
-			scopes do: [:scope |
-				DCQuery
-					script: {
-						[:block | block childSandblocks detect: [:a | a type = #temporaries] ifNone: [nil]].
-						[:temps | temps childSandblocks].
-						[:vars | id addOwnSuggestions: (vars collect: [:c | c contents]) label: 'temp']}
-					with: scope.
-				DCQuery
-					script: {
-						[:block |
-							DCWatch
-								report: (block childSandblocks select: [:a | a type = #'block_argument'])
-								for: '33d56e88-3979-4a35-815d-ec9c4250d2c3'].
-						[:vars | id addOwnSuggestions: (vars collect: [:c | c contents allButFirst]) label: 'block arg']}
-					with: scope].
-			id].
-		[:id |
-			DCQuery
-				script: {
-					self smalltalkMethodSelector.
-					[:selector | selector children select: [:c | c type = #identifier]].
-					[:args | id addOwnSuggestions: (args collect: [:c | c contents]) label: 'method arg']}
-				with: id.
-			id].
-		[:id | {#args. id. id containingArtefact}].
-		[:id :method | method class = DCSmalltalkMethod].
-		[:id :method | id addOwnSuggestions: method methodClass instVarNames label: 'inst var']}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkInsertArg [
-	<query: #shortcut>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x |
-			#(#First #Second #Third #Fourth #Fifith) withIndexDo: [:name :index |
-				x registerShortcut: #use, name, #Argument do: [
-					{
-						[:block |
-							(DCQuery script: {self smalltalkMethodArguments. [:args | (args at: index) contents]} with: block) ifNotNil: [:id |
-								(block type = #identifier or: [block sandblockEditor mode = #command])
-									ifTrue: [block replaceWith: id, ' ']
-									ifFalse: [block insert: id, ' ']]]}]]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkInsertWatch [
-	<query: #shortcut>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x |
-			x registerShortcut: #wrapWithWatch do: [
-				{
-					[:expr |
-						expr replacedParent class = DCWatch
-							ifTrue: [expr replaceWith: expr replacedParent expression sourceString]
-							ifFalse: [expr wrapWithBefore: '(DCWatch report: (' after: ') for: ', UUID new asString storeString, ')']]}]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkJumpPlaceholder [
-	<query: #always>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | #(#identifier #'unary_identifier') includes: x type].
-		[:x | x contents = '__sb'].
-		[:x | x ensureReplacement: DCJumpPlaceholder initDo: [:b | ]]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkMessageSend [
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | #(keyword_message binary_message unary_message keyword binary_operator unary_identifier) includes: x type].
-		[:x | x orParent: #(keyword_message binary_message unary_message)]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkMessageSendAutoCompletion [
-	<query: #type>
-
-	^ {
-		[:x | x isSelected].
-		[:x | (DCQuery script: self smalltalkMessageSendSelectorIncludingCascaded with: x) ifNotNil: [:res | res, {x}]].
-		[:selector :message :part | selector size > 2].
-		[:selector :message :part |
-			part addSuggestions: ((self sortedSymbolSuggestionsFor: selector max: 10) collect: [:sel |
-				DCSuggestionItem new
-					selector: sel label: 'send' source: ((sel allSatisfy: #isSpecial) ifTrue: [sel, ' __sb'] ifFalse: [
-						(sel includes: $:)
-							ifTrue: [
-								((sel splitBy: ':') allButLast collectWithIndex: [:p :index |
-									p, ((index = 1 and: [part nextBlock ifNotNil: #isExpression ifNil: [false]])
-										ifTrue: [':']
-										ifFalse: [': __sb'])]) joinSeparatedBy: ' ']
-							ifFalse: [sel]]);
-					completionAction: [:editor |
-						editor selection parent
-							allChildrenDetect: [:c | c contents = '__sb']
-							ifFound: [:c | c containingSandblock startInputAtStart]
-							ifNone: []]])]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkMessageSendSelector [
-
-	^ {
-		self smalltalkMessageSend.
-		[:message | {#args. message children select: [:c | c is: #(#keyword #'binary_operator' #'unary_identifier')]. message}].
-		[:hits :message | {#args. hits collect: #contents. message}].
-		[:parts :message | {#args. parts joinSeparatedBy: ''. message}]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkMessageSendSelectorIncludingCascaded [
-
-	^ {
-		[:x | DCQuery firstScript: {self smalltalkMessageSend. self smalltalkCascadedMessageSend} with: x].
-		[:message | {#args. message children select: [:c | c is: #(#keyword #'binary_operator' #'unary_identifier')]. message}].
-		[:hits :message | {#args. hits collect: #contents. message}].
-		[:parts :message | {#args. parts joinSeparatedBy: ''. message}]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkMethodArguments [
-
-	^ {self smalltalkMethodSelector. [:x | x childSandblocks select: [:c | c type = #identifier]]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkMethodSelector [
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | x orAnyParent: #method].
-		[:x |
-			x childSandblocks
-				detect: [:c | #(#'keyword_selector' #'binary_selector' #'unary_selector') includes: c type]
-				ifNone: [nil]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkReloadArtefact [
-	<query: #shortcut>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | x containingArtefact class = DCSmalltalkMethod].
-		[:x |
-			x registerShortcut: #reloadArtefact do: [
-				{
-					[:m | | method |
-						method := (DCSmalltalkMethod for: m containingArtefact object)
-							hResizing: m containingArtefact hResizing;
-							width: m containingArtefact width;
-							yourself.
-						
-						m sandblockEditor do: (SBReplaceCommand new target: m containingArtefact replacer: method).
-						
-						method firstDeepChild startInputAtEnd]}]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkRunTest [
-	<query: #save>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | x containingArtefact].
-		[:x | (x selector beginsWith: 'test') and: [x methodClass inheritsFrom: TestCase]].
-		[:x |
-			Project current addDeferredUIMessage: [ | addIcon displayedError |
-				x method all: {[:p | p purpose = #testResult]} do: #passiveUninstall.
-				addIcon := [:icon | x method addMorphFront: ((SBIcon perform: icon) wrapped: #testResult)].
-				displayedError := false.
-				
-				[(x methodClass selector: x selector) runCase]
-					on: TestResult failure
-					do: [:signal |
-						x messageSendForError: signal argsDo: [:message :args |
-							message run: {
-								self smalltalkMessageSendSelector.
-								[:selector :m | selector = #assert:equals:].
-								[:selector :m |
-									displayedError := true.
-									args do: [:arg |
-										DCPreviewValue new
-											value: arg value;
-											purpose: #testResult;
-											installFor: arg key]]}].
-						addIcon value: #iconTimesCircle.
-						displayedError ifFalse: [signal signal]]
-					on: TestResult exError
-					do: [:signal |
-						addIcon value: #iconTimesCircle.
-						signal signal].
-				displayedError ifFalse: [addIcon value: #iconCheckCircle]]]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkSelector [
-
-	^ {
-		[:x |
-			DCQuery
-				firstScript: {
-					self smalltalkMessageSendSelector.
-					{
-						[:b | b language = SBTSSmalltalk].
-						[:b | b type = #symbol].
-						[:sym | {#args. sym lastSubmorph contents allButFirst. sym}]}.
-					{
-						[:b | b language = SBTSSmalltalk].
-						[:b | b orParent: #(#'keyword_selector' #'binary_selector' #'unary_selector')].
-						[:sel |
-							{
-								#args.
-								DCQuery
-									script: {
-										[:s | s children select: [:c | c is: #(#keyword #'binaary_operator' #'unary_identifier')]].
-										[:hits | (hits collect: #contents) joinSeparatedBy: '']}
-									with: sel.
-								sel}]}}
-				with: x]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkSelectorWithPlaceholders: aString [
-
-	(aString allSatisfy: #isSpecial) ifTrue: [^ aString, ' __sb'].
-	(aString includes: $:) ifFalse: [^ aString].
-	^ ((aString splitBy: ':') allButLast collect: [:part | part, ': __sb']) joinSeparatedBy: ' '
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkShowImplementor [
-	<query: #doubleClick>
-
-	^ {
-		self smalltalkBlockWithSelector.
-		self smalltalkSelector.
-		[:selector :message | {#args. selector. message. self systemNavigation allImplementorsOf: selector asSymbol}].
-		[:selector :message :list |
-			list ifNotEmpty: [ | method preview |
-				method := DCSmalltalkMethod for: list first compiledMethod.
-				preview := DCReplacement new
-					embed: [:msg | {msg}];
-					listDirection: #topToBottom;
-					cellGap: 0.
-				message installActiveReplacement: preview.
-				preview
-					addMorphBack: preview updateEmbeds first;
-					addMorphBack: method;
-					addMorphBack: (SBIcon iconRemove on: #click send: #activeUninstall to: preview)]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkSymbolAutocompletion [
-	<query: #type>
-
-	^ {
-		[:x | x isSelected].
-		[:x | x language = SBTSSmalltalk].
-		[:x | x type = #symbol].
-		[:x | x addSuggestions: ((self sortedSuggestions: Symbol allSymbols for: x contents allButFirst addAll: false max: 10) collect: [:sel | DCSuggestionItem new selector: sel label: 'symbol' source: '#', sel])]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkToggleBoolean [
-	<query: #doubleClick>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | #('true' 'false') includes: x type].
-		[:x | x replaceWith: (x type = 'true' ifTrue: ['false'] ifFalse: ['true'])]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkUndeclaredVariable [
-	<query: #type>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | x type = #identifier].
-		[:x |
-			(DCQuery script: self smalltalkDeclaration with: x)
-				ifNil: [x]
-				ifNotNil: [nil]].
-		[:x |
-			x reportError: (SBErrorDecorator new
-				message: 'undeclared variable';
-				fixActions: ((x contents notEmpty and: [x contents first isUppercase])
-					ifTrue: [
-						{
-							SBCodeAction
-								labeled: 'Declare class var'
-								for: x
-								do: [:block | self smalltalkDeclareClassVariable: block].
-							SBCodeAction
-								labeled: 'Create class ', x contents
-								for: x
-								do: [:block | self smalltalkCreateClassFor: block]}]
-					ifFalse: [
-						{
-							SBCodeAction
-								labeled: 'Declare block-local'
-								for: x
-								do: [:block | self smalltalkDeclareBlockLocal: block].
-							SBCodeAction
-								labeled: 'Declare method temporary'
-								for: x
-								do: [:block | self smalltalkDeclareTemporary block].
-							SBCodeAction
-								labeled: 'Declare instance variable'
-								for: x
-								do: [:block | self smalltalkDeclareInstanceVariable: block]}]))]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkUnknownSelector [
-	<query: #type>
-
-	^ {
-		self smalltalkMessageSendSelector.
-		[:selector :message | (Symbol lookup: selector) isNil].
-		[:selector :message |
-			(message queryChildrenFirst: '[(unary_identifier) (binary_operator) (keyword)] @') reportError: (SBErrorDecorator new
-				message: 'unknown message';
-				fixActions: {
-					SBCodeAction labeled: 'Create method on ...' for: message do: [:node | | method class |
-						class := UIManager default chooseClassOrTrait.
-						class ifNotNil: [
-							method := DCSmalltalkMethod
-								newWith: (self smalltalkSelectorWithPlaceholders: selector)
-								in: class.
-							node sandblockEditor do: (SBEditorOpenMorphCommand new
-								morph: method;
-								editor: node sandblockEditor;
-								isUnsaved: true;
-								yourself)]].
-					SBCodeAction
-						labeled: 'Confirm selector "', selector, '"'
-						for: message
-						do: [:node | selector asSymbol]})]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkUnusedVariable [
-	<query: #(#always)>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | x hasParent: #temporaries].
-		[:x | {#args. x. x}].
-		self smalltalkUsesOfDeclaration.
-		[:decl :uses | uses size = 1].
-		[:decl :uses |
-			decl reportError: (SBErrorDecorator new
-				message: 'unused variable';
-				fixActions: {SBCodeAction labeled: 'Remove unused declaration' for: decl do: [:node | node deleteBlock]})]}
-]
-
-{ #category : #'smalltalk - helpers' }
-PNode class >> smalltalkUsesOfDeclaration [
-
-	^ {
-		[:id :decl |
-			decl isSandblock
-				ifTrue: [{#args. decl. decl orAnyParent: #(#block #method)}]
-				ifFalse: [{#args. decl. id containingArtefact}]].
-		[:decl :scope | | search |
-			search := decl isSandblock
-				ifTrue: [decl contents withoutLeading: #($:)]
-				ifFalse: [decl isString ifTrue: [decl] ifFalse: [decl name]].
-			{
-				#args.
-				decl.
-				scope allChildrenSelect: [:x | (#(#identifier #'block_argument') includes: x type) and: [(x contents withoutLeading: #($:)) = search]]}]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkVisualSelf [
-	<query: #always>
-
-	^ {
-		[:x | true].
-		[:x | x language = SBTSSmalltalk].
-		[:x | x type = 'self'].
-		[:x | x ensureReplacement: DCReplacement initDo: [:r | r addMorphBack: SBIcon iconHeart]]}
-]
-
-{ #category : #smalltalk }
-PNode class >> smalltalkWatch [
-	<query: #always>
-
-	^ {
-		[:x | x language = SBTSSmalltalk].
-		[:x | x type = #'keyword_message'].
-		[:x | true].
-		self smalltalkMessageSendSelector.
-		[:selector :message | selector = #report:for:].
-		[:selector :message | message childrenHaveErrors not].
-		[:selector :message |
-			(message parent type = 'parenthesized_expression'
-				ifTrue: [message parent]
-				ifFalse: [message])
-				ensureReplacement: DCWatch
-				initDo: [:w |
-					w addMorphBack: (w embed: [:s | | expr |
-						expr := (s type = #'parenthesized_expression'
-							ifTrue: [s childNodes second]
-							ifFalse: [s]) childNodes third.
-						expr type = 'parenthesized_expression'
-							ifTrue: [expr childNodes second]
-							ifFalse: [expr]])]]}
 ]
 
 {
@@ -1322,41 +265,6 @@ PNode class >> swap: aRange with: anotherRange in: aString do: aBlock [
 				with: (second withSize: first size) + (second size - first size)
 				in: source
 				do: block]
-]
-
-{ #category : #tlaplus }
-PNode class >> tlaplusSourceFile [
-	<query: #always>
-
-	^ {
-		[:x | x language = SBTlaplus].
-		[:x | x type = #module].
-		[:x | false].
-		[:x |
-			x
-				ensureReplacement: DCTlaplusModule
-				embed: [:m | {m children select: [:c | c type = #'operator_definition']}]
-				initDo: [:m :definitions | | wrap |
-					m layoutPolicy: TableLayout new.
-					m hResizing: #rigid.
-					m vResizing: #rigid.
-					m extent: 800 @ 500.
-					m addMorphBack: (SBEditorCanvas new
-						color: Color transparent;
-						hResizing: #spaceFill;
-						vResizing: #spaceFill;
-						yourself).
-					wrap := [:c |
-						SBBlock new
-							addMorphBack: c;
-							layoutInset: 10;
-							position: 300 @ 100;
-							attachDecorator: SBForceMoveDecorator newConfigured;
-							layoutPolicy: TableLayout new;
-							hResizing: #shrinkWrap;
-							vResizing: #shrinkWrap;
-							yourself].
-					m firstSubmorph addAllMorphs: (definitions collect: wrap)]]}
 ]
 
 {
@@ -1436,16 +344,22 @@ PNode >> alias [
 	^ nil
 ]
 
-{ #category : #queries }
+{
+	#category : #queries,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:14'
+}
 PNode >> all: aCollection [
 
-	^ Array streamContents: [:s | self allBlocksDo: [:b | (DCQuery script: aCollection with: b) ifNotNil: [:res | s nextPut: res]]]
+	^ Array streamContents: [:s | self allBlocksDo: [:b | (PQuery script: aCollection with: b) ifNotNil: [:res | s nextPut: res]]]
 ]
 
-{ #category : #queries }
+{
+	#category : #queries,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:14'
+}
 PNode >> all: aCollection do: aBlock [
 
-	(self allBlocksSelect: [:b | (DCQuery script: aCollection with: b) notNil]) do: aBlock
+	(self allBlocksSelect: [:b | (PQuery script: aCollection with: b) notNil]) do: aBlock
 ]
 
 { #category : #'base accessing' }
@@ -2775,12 +1689,17 @@ PNode >> printTree [
 	^ s contents
 ]
 
-{ #category : #'as yet unclassified' }
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:04'
+}
 PNode >> printTreeOn: aStream indent: aNumber [
 
 	aNumber timesRepeat: [aStream tab].
 	aStream nextPutAll: '('.
 	aStream nextPutAll: self type.
+	aStream space.
+	aStream print: self range.
 	aStream cr.
 	self children do: [:c | c printTreeOn: aStream indent: aNumber + 1] separatedBy: [aStream cr].
 	aStream nextPutAll: ')'
@@ -2828,10 +1747,13 @@ PNode >> privateTSTreeOrNilDo: aBlock [
 	^ tsTree ifNotNil: [:tree | tree isNull ifFalse: [aBlock value: tree] ifTrue: [nil]]
 ]
 
-{ #category : #'as yet unclassified' }
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:15'
+}
 PNode >> queryAll: aString [
 
-	aString isString ifFalse: [^ DCQuery script: aString allDeep: self].
+	aString isString ifFalse: [^ PQuery script: aString allDeep: self].
 	
 	self assert: (aString includes: $@) description: 'query needs a capture (@) to be useful'.
 	
@@ -2858,11 +1780,11 @@ PNode >> queryChildrenFirst: aString [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/21/2024 17:58'
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:15'
 }
 PNode >> queryFirst: aString [
 
-	aString isString ifFalse: [^ DCQuery script: aString firstDeep: self].
+	aString isString ifFalse: [^ PQuery script: aString firstDeep: self].
 	
 	self assert: (aString includes: $@) description: 'query needs a capture (@) to be useful'.
 	
@@ -2989,10 +1911,13 @@ PNode >> rootBlock [
 	^ current
 ]
 
-{ #category : #queries }
+{
+	#category : #queries,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:15'
+}
 PNode >> run: aCollection [
 
-	^ DCQuery script: aCollection with: self
+	^ PQuery script: aCollection with: self
 ]
 
 { #category : #'as yet unclassified' }

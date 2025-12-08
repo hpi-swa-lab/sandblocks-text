@@ -388,21 +388,19 @@ PShard >> uninstallReplacement: aReplacement [
 
 {
 	#category : #replacements,
-	#'squeak_changestamp' : 'tobe 4/20/2024 08:22'
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:15'
 }
 PShard >> updateReplacementsFor: anEditScript root: aRoot [
 
 	anEditScript removeDo: [:op |
-		self replacements
-			detect: [:r | op node = r node]
-			ifFound: [:r | self uninstallReplacement: r].
+		self replacements detect: [:r | op node = r node] ifFound: [:r | self uninstallReplacement: r].
 		attributes do: [:attr | op node = attr node ifTrue: [attr definition detach value: self value: op node value: attr]]].
 	
 	extensions value do: [:ext |
 		(ext replacementDefinitions select: [:def | def model = aRoot language]) do: [:def |
 			self
 				allVisibleNodesDo: [:node | | matches |
-					matches := (DCQuery script: def query with: node) notNil.
+					matches := (PQuery script: def query with: node) notNil.
 					self replacements
 						detect: [:r | r definition name = def name and: [node = r node]]
 						ifFound: [:r | matches ifFalse: [self uninstallReplacement: r]]
@@ -413,7 +411,7 @@ PShard >> updateReplacementsFor: anEditScript root: aRoot [
 		(ext markerDefinitions select: [:def | def model = aRoot language]) do: [:def |
 			self
 				allVisibleNodesDo: [:node | | matches |
-					matches := (DCQuery script: def query with: node) notNil.
+					matches := (PQuery script: def query with: node) notNil.
 					attributes
 						detect: [:attr | attr definition name = def name and: [node = attr node]]
 						ifFound: [:attr | matches ifFalse: [def detach value: self value: node value: attr]]
