@@ -323,7 +323,7 @@ PEditorTest >> testRejectResetsIndizes [
 	
 	e applyChanges: {PChange range: (2 to: 2) insert: '3'}.
 	self
-		assert: (SBTSRange indexStart: 0 end: 2)
+		assert: (PRange indexStart: 0 end: 2)
 		equals: (e models at: SBJavascript) baseChildren first baseChildren first range
 ]
 

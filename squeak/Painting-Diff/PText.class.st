@@ -195,7 +195,7 @@ PText >> initialize [
 	super initialize.
 	
 	contents := ''.
-	range := SBTSRange null
+	range := PRange null
 ]
 
 { #category : #'as yet unclassified' }

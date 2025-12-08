@@ -324,7 +324,7 @@ PShard >> onChange: aNewString [
 }
 PShard >> range [
 
-	^ self editor adjustRange: (SBTSRange indexStart: self nodes first range first end: self nodes last range last)
+	^ self editor adjustRange: (PRange indexStart: self nodes first range first end: self nodes last range last)
 ]
 
 {
@@ -429,7 +429,7 @@ PShard >> updateText [
 	out := (self nodes inject: '' into: [:text :node | text, node sourceString]) asText.
 	
 	self editor pendingChanges withIndexDo: [:change :index |
-		myRange := SBTSRange
+		myRange := PRange
 			indexStart: (self editor
 				adjustIndex: self nodes first range first
 				forChangeList: self editor pendingChanges
@@ -449,7 +449,7 @@ PShard >> updateText [
 				to: change to - myRange first
 				with: change insert]].
 	
-	myRange := SBTSRange
+	myRange := PRange
 		indexStart: (self editor
 			adjustIndex: self nodes first range first
 			forChangeList: self editor pendingChanges

@@ -12,8 +12,8 @@ Class {
 PRange class >> fromLSP: aJsonObject [
 
 	^ self
-		start: (SBTSPosition fromLSP: (aJsonObject at: 'start'))
-		end: ((SBTSPosition fromLSP: (aJsonObject at: 'end')))
+		start: (PPosition fromLSP: (aJsonObject at: 'start'))
+		end: ((PPosition fromLSP: (aJsonObject at: 'end')))
 ]
 
 { #category : #'instance creation' }
@@ -28,7 +28,7 @@ PRange class >> fromLSPWithRange: aJsonObject [
 }
 PRange class >> indexStart: aNumber end: anotherNumber [
 
-	^ self start: (SBTSPosition fromIndex: aNumber) end: (SBTSPosition fromIndex: anotherNumber)
+	^ self start: (PPosition fromIndex: aNumber) end: (PPosition fromIndex: anotherNumber)
 ]
 
 {
@@ -46,13 +46,13 @@ PRange class >> merging: aCollection [
 	| min max |
 	min := (aCollection detectMin: [:range | range start index]) start index.
 	max := (aCollection detectMax: [:range | range end index]) end index.
-	^ SBTSRange start: min size: max - min
+	^ PRange start: min size: max - min
 ]
 
 { #category : #'instance creation' }
 PRange class >> null [
 
-	^ SBTSRange start: SBTSPosition null end: SBTSPosition null
+	^ PRange start: PPosition null end: PPosition null
 ]
 
 { #category : #'instance creation' }
@@ -73,8 +73,8 @@ PRange class >> start: aTSPosition end: anotherTSPosition [
 PRange class >> start: aNumber size: anotherNumber [
 
 	^ self new
-		start: (SBTSPosition line: nil character: nil index: aNumber);
-		end: (SBTSPosition line: nil character: nil index: aNumber + anotherNumber)
+		start: (PPosition line: nil character: nil index: aNumber);
+		end: (PPosition line: nil character: nil index: aNumber + anotherNumber)
 ]
 
 { #category : #converting }

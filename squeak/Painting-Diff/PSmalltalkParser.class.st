@@ -46,8 +46,8 @@ PSmalltalkParser >> createPNode: aParseNode type: aSymbol [
 	^ PNode new
 		range: (encoder rawSourceRanges
 			at: aParseNode
-			ifPresent: [:range | SBTSRange interval: range]
-			ifAbsent: [SBTSRange null]);
+			ifPresent: [:range | PRange interval: range]
+			ifAbsent: [PRange null]);
 		language: self class;
 		type: aSymbol;
 		yourself

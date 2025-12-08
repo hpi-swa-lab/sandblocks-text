@@ -78,7 +78,7 @@ PEditorState >> adjustIndex: aNumber forChangeList: aCollection upTo: anotherNum
 }
 PEditorState >> adjustRange: aRange [
 
-	^ SBTSRange
+	^ PRange
 		indexStart: (self adjustIndex: aRange first forChangeList: self pendingChanges sideAffinity: 1)
 		end: (self adjustIndex: aRange last forChangeList: self pendingChanges sideAffinity: -1)
 ]
@@ -206,7 +206,7 @@ PEditorState >> pendingChanges [
 }
 PEditorState >> range [
 
-	^ SBTSRange indexStart: 0 end: self sourceString size
+	^ PRange indexStart: 0 end: self sourceString size
 ]
 
 {

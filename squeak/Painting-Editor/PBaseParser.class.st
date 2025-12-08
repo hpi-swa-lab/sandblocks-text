@@ -14,7 +14,7 @@ PBaseParser class >> parse: aString old: aNode [
 	doc := PNode new
 		type: 'document';
 		language: self;
-		range: (SBTSRange indexStart: 0 end: aString size);
+		range: (PRange indexStart: 0 end: aString size);
 		privateSource: aString.
 	^ doc
 ]

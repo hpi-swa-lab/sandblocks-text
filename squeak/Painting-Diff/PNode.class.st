@@ -35,11 +35,11 @@ PNode class >> addUncapturedTextTo: aNode in: aCursor language: aLanguage isLeaf
 	text isolateLineBreaks do: [:part |
 		part isEmpty ifFalse: [
 			part = String cr
-				ifTrue: [aNode baseAndMorphAdd: (PText new contents: String cr; range: (SBTSRange start: start size: 1))]
+				ifTrue: [aNode baseAndMorphAdd: (PText new contents: String cr; range: (PRange start: start size: 1))]
 				ifFalse: [
 					aNode baseAndMorphAdd: (PText new
 						contents: part;
-						range: (SBTSRange start: start size: part size))]].
+						range: (PRange start: start size: part size))]].
 		start := start + part size].
 	aCursor advance: text size.
 	
@@ -112,7 +112,7 @@ PNode class >> maybeAddTrailingLineBreak: aBlock [
 
 	| last |
 	last := aBlock lastDeepBaseChild.
-	aBlock baseAndMorphAdd: (PText new contents: String cr; range: (SBTSRange start: last range end end: last range end + 1)).
+	aBlock baseAndMorphAdd: (PText new contents: String cr; range: (PRange start: last range end end: last range end + 1)).
 	^ aBlock
 ]
 
@@ -175,7 +175,7 @@ PNode class >> wrap: aRange in: aString open: anotherString close: aThirdString 
 
 	self
 		example: [PNode new]
-		args: [{SBTSRange start: 3 size: 3. 'abcdefghi'. '('. ')'}]
+		args: [{PRange start: 3 size: 3. 'abcdefghi'. '('. ')'}]
 		label: 'example'.
 	
 	^ (aString first: aRange start index), anotherString, (aString copyFrom: aRange start index + 1 to: aRange end index), aThirdString, (aString allButFirst: aRange end index)
@@ -677,7 +677,7 @@ PNode >> initialize [
 
 	super initialize.
 	
-	range := SBTSRange null.
+	range := PRange null.
 	baseParent := nil.
 	baseChildren := OrderedCollection new: 1
 ]
@@ -1244,7 +1244,7 @@ PNode >> sourceString [
 PNode >> statementWithTerminatorRange [
 
 	^ self trailingTerminator
-		ifNotNil: [:t | SBTSRange merging: {self range. t range}]
+		ifNotNil: [:t | PRange merging: {self range. t range}]
 		ifNil: [self range]
 ]
 
