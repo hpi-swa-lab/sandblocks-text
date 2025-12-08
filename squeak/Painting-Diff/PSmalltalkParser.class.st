@@ -39,7 +39,7 @@ PSmalltalkParser >> addChild: aPNode [
 
 {
 	#category : #structure,
-	#'squeak_changestamp' : 'tobe 12/8/2025 21:12'
+	#'squeak_changestamp' : 'tobe 12/8/2025 21:42'
 }
 PSmalltalkParser >> createPNode: aParseNode type: aSymbol [
 

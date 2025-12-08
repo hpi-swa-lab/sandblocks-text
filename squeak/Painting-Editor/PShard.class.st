@@ -125,7 +125,7 @@ PShard >> extensions: aBlock [
 
 {
 	#category : #utils,
-	#'squeak_changestamp' : 'tobe 4/13/2024 08:29'
+	#'squeak_changestamp' : 'tobe 12/8/2025 21:52'
 }
 PShard >> findChange: aString b: anotherString preferredPos: preferredPos preferredSide: preferredSide [
 
@@ -141,7 +141,9 @@ PShard >> findChange: aString b: anotherString preferredPos: preferredPos prefer
 				#to -> (diff at: #toA)}]
 		ifFalse: [
 			{
-				#insert -> (anotherString copyFrom: (diff at: #from) to: (diff at: #toB) - 1).
+				#insert -> (anotherString
+					copyFrom: (diff at: #from)
+					to: (diff at: #toB) - 1).
 				#from -> (diff at: #from).
 				#to -> (diff at: #toA)}]) as: Dictionary
 ]

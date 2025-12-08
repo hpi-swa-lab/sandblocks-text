@@ -358,11 +358,11 @@ PNode >> assigned [
 
 {
 	#category : #diffing,
-	#'squeak_changestamp' : 'tobe 12/8/2025 20:37'
+	#'squeak_changestamp' : 'tobe 12/8/2025 22:00'
 }
 PNode >> assigned: aBlock [
 
-	(aBlock notNil and: [self treeLabel ~= aBlock treeLabel]) ifTrue: [self halt].
+	"(aBlock notNil and: [self treeLabel ~= aBlock treeLabel]) ifTrue: [self halt]."
 	assigned := aBlock
 ]
 

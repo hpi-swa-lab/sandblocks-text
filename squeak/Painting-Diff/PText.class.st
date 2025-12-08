@@ -267,6 +267,15 @@ PText >> lastDeepChild [
 	^ self
 ]
 
+{
+	#category : #diffing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 21:52'
+}
+PText >> literalHash [
+
+	^ self contents hash
+]
+
 { #category : #'as yet unclassified' }
 PText >> ownerWithForegroundColor [
 
@@ -380,6 +389,16 @@ PText >> siblingIndex [
 PText >> statementWithTerminatorRange [
 
 	^ self range
+]
+
+{
+	#category : #diffing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 21:52'
+}
+PText >> structureHash [
+	" arbitrary non-null number to identity the existence of this node "
+
+	^ 7
 ]
 
 { #category : #'as yet unclassified' }
