@@ -1,6 +1,21 @@
 # Hello CodeMirror!
 
 <script>
+  // hack for better loading...
+  await lively.sleep(1000)
+//   var buttons = <div>
+//     <button click={async () => {
+//         const editor = await lively.openWorkspace("");
+//         editor.setAttribute("sandblocks", true)  
+//     }}>workspace</button>
+//   </div>
+
+//   buttons
+""
+</script>
+
+
+<script>
 
   import { languageFor } from "./core/languages.js";  
   import {
@@ -24,9 +39,13 @@
   setConfig({baseURL: baseDir + '/'})
 
   import {addVitrailToLivelyEditor} from './vitrail/lively.js';
+
+  "loaded sandblocks"
 </script>
 
 <script>
+var pane = <div style="border:1px solid "></div>
+    
 try {
   
 
@@ -263,11 +282,13 @@ const tables = {
 
 await addVitrailToLivelyEditor(editor, [watch, smileys, colorstring, tables, dataurlimage]) 
 
-var pane = <div style="border:1px solid ">{editor}</div>
 
+pane.appendChild(editor)
+    
 } catch(e) {
   debugger
+  pane.innerHTML = "ERROR: " + e
 }
 
-pane
+pane || "no pane"
 </script>
