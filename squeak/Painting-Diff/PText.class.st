@@ -344,12 +344,6 @@ PText >> range: aRange [
 	range := aRange
 ]
 
-{ #category : #'as yet unclassified' }
-PText >> rootBlock [
-
-	^ self owner rootBlock
-]
-
 {
 	#category : #'as yet unclassified',
 	#'squeak_changestamp' : 'tobe 4/13/2024 14:28'
