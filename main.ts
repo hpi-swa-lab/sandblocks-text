@@ -29,6 +29,11 @@ const jsAugmentations = [
   color(languageFor("javascript")),
 ];
 
+// expose for eval()
+window.languageFor = languageFor;
+await languageFor("python").ready();
+await languageFor("javascript").ready();
+
 function Demo() {
   const placeholderValue = useSignal(`function __VI_PLACEHOLDER_functionName() {
   __VI_PLACEHOLDER_body
@@ -38,7 +43,7 @@ function Demo() {
     "db.execute(sql`SELECT \\`name\\` FROM \\`users\\``);",
   );
 
-  const watchValue = useSignal('3 + ["sbWatch", 2 + 2][1]');
+  const watchValue = useSignal('3 + ["sbWatch", 2 + 2][1] * 4');
   const watchEditor = useSignal(null);
   useSignalEffect(() => {
     // TODO not rewritten yet on startup
@@ -111,6 +116,39 @@ let color = ["color", baseline + 140, 3, ["slider", 0, 255, 1, 25][4]];`);
       fetchAugmentations: () => jsAugmentations,
       cmExtensions: [...baseCMExtensions, javascript()],
     }),
+
+    h(EditingScenarios),
+  ];
+}
+
+function EditingScenarios() {
+  return [
+    h('h3', {}, 'Replace with precedence'),
+    h(LiveEvalEditor, { initialText: `const program = languageFor("python").parseOffscreen('a * 4')
+const identifierA = program.children[0].children[0]
+identifierA.replaceWith('2 + 3')
+program.sourceString` }),
+  ]
+}
+
+function LiveEvalEditor({ initialText }) {
+  const text = useSignal(initialText);
+  const result = useSignal("");
+  useSignalEffect(() => {
+    try {
+      result.value = eval(text.value).toString();
+    } catch (error) {
+      result.value = error.toString();
+    }
+  });
+
+  return [
+    h(CodeMirrorWithVitrail, {
+      value: text,
+      fetchAugmentations: () => jsAugmentations,
+      cmExtensions: [...baseCMExtensions, javascript()],
+    }),
+    h("div", {}, "Result: " + result.value),
   ];
 }
 
