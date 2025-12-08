@@ -177,9 +177,13 @@ PPosition >> offsetBy: aTSPosition [
 		ifFalse: [self character + aTSPosition character])
 ]
 
-{ #category : #printing }
+{
+	#category : #printing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 21:13'
+}
 PPosition >> printOn: aStream [
 
+	self line < 0 ifTrue: [^ aStream nextPutAll: self index asString].
 	aStream nextPutAll: '(line='.
 	aStream print: self line.
 	aStream nextPutAll: ',char='.

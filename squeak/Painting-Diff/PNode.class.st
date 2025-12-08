@@ -155,12 +155,12 @@ PNode class >> parseBlock: aString language: aLanguage [
 
 {
 	#category : #'parsing - smalltalk',
-	#'squeak_changestamp' : 'tobe 12/8/2025 20:00'
+	#'squeak_changestamp' : 'tobe 12/8/2025 21:21'
 }
 PNode class >> parseSt: aString [
 
 	| node parser |
-	parser := Parser new.
+	parser := FullRangeParser new.
 	node := parser parse: aString class: Object.
 	^ node accept: (PSmalltalkParser new
 		encoder: parser encoder;

@@ -39,14 +39,14 @@ PSmalltalkParser >> addChild: aPNode [
 
 {
 	#category : #structure,
-	#'squeak_changestamp' : 'tobe 12/8/2025 19:59'
+	#'squeak_changestamp' : 'tobe 12/8/2025 21:12'
 }
 PSmalltalkParser >> createPNode: aParseNode type: aSymbol [
 
 	^ PNode new
 		range: (encoder rawSourceRanges
 			at: aParseNode
-			ifPresent: [:range | PRange interval: range]
+			ifPresent: [:range | PRange indexStart: range start - 1 end: range stop]
 			ifAbsent: [PRange null]);
 		language: self class;
 		type: aSymbol;
@@ -152,6 +152,18 @@ PSmalltalkParser >> visitBraceNode: aBraceNode [
 	
 	aBraceNode elements do: [:element | node baseAndMorphAdd: (element accept: self)].
 	
+	^ node
+]
+
+{
+	#category : #visiting,
+	#'squeak_changestamp' : 'tobe 12/8/2025 21:20'
+}
+PSmalltalkParser >> visitBracketNode: aBracketNode [
+
+	| node |
+	node := self createPNode: aBracketNode type: #bracket.
+	node baseAndMorphAdd: (aBracketNode expr accept: self).
 	^ node
 ]
 
