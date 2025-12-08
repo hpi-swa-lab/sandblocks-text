@@ -25,9 +25,13 @@ export async function addVitrailToLivelyEditor(
     // Function to get cm safely (for shards that might not be ready)
     const getCm = () => livelyCodeMirror.editor;
 
+    // Use the CodeMirror wrapper element as the view for proper DOM containment
+    // This ensures replacements inserted via markText are properly contained
+    const view = cm ? cm.getWrapperElement() : livelyCodeMirror;
+
     const pane = new Pane({
       vitrail,
-      view: livelyCodeMirror,
+      view: view,
       host: livelyCodeMirror,
       fetchAugmentations,
       getLocalSelectionIndices: () => {
@@ -136,18 +140,26 @@ export async function addVitrailToLivelyEditor(
     });
 
     let changeRange = null;
+    let isUndoRedo = false;
+
     cm.on("beforeChange", (cm, e) => {
       if (e.origin === "setValue" || !e.origin) return;
+
+      // Track if this is an undo/redo operation
+      isUndoRedo = e.origin === "undo" || e.origin === "redo";
+
       // to resolve the correct indices, we need to calculate the index before
       // the change is applied. However, Vitrail expects the change to have been
       // applied when we inform it of a change. So we need both listeners.
       changeRange = [cm.indexFromPos(e.from), cm.indexFromPos(e.to)];
     });
+
     cm.on("change", (_cm, e) => {
       if (e.origin === "setValue" || !e.origin) return;
 
       const [from, to] = changeRange;
-      const insert = e.text.join("");
+      const insert = e.text.join("\n");
+      const removed = e.removed.join("\n");
 
       const change = {
         from: from + pane.startIndex,
@@ -157,11 +169,16 @@ export async function addVitrailToLivelyEditor(
         inverse: {
           from: from + pane.startIndex,
           to: from + pane.startIndex + insert.length,
-          insert: e.removed,
+          insert: removed,
         },
+        // Pass the undo/redo flag to Vitrail (it may use this in the future)
+        isUndoRedo,
       };
 
       v.applyChanges([change]);
+
+      // Reset the flag
+      isUndoRedo = false;
     });
     };
 
@@ -174,15 +191,6 @@ export async function addVitrailToLivelyEditor(
   const v = new Vitrail({
     createPane: (fetchAugmentations) => {
       const editor = document.createElement("lively-code-mirror");
-      // Check if we are in Lively, otherwise attach an external CodeMirror
-      if (!editor.editView) {
-        editor.editor = CodeMirror(editor, { value: "asd" });
-        editor.editor.display.wrapper.style.height = "auto";
-        onEnterDOM(editor, () => editor.editor.refresh());
-      } else {
-        // In Lively4, editView is async - call it and editor will be ready later
-        editor.editView("");
-      }
       editor.classList.add("shard");
       editor.style = "display:inline-block; border: 1px solid gray";
       return paneFromLively(editor, v, fetchAugmentations);
