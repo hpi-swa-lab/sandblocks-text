@@ -15,7 +15,7 @@ Class {
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 12/8/2025 20:02'
+	#'squeak_changestamp' : 'tobe 12/8/2025 21:06'
 }
 PEditorState class >> example [
 
@@ -31,9 +31,7 @@ PEditorState class >> example [
 	e rootShard extensions: [{testExt}].
 	e sourceString: 'test
 
-	(2 + 
-
-8) sbWatch'.
+	(2 + 8) sbWatch'.
 	
 	container := Morph new
 		addMorphBack: e rootShard;
