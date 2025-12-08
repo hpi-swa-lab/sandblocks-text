@@ -347,6 +347,25 @@ PNode >> assertConsecutiveRanges [
 			current := m range end index]]
 ]
 
+{
+	#category : #diffing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:39'
+}
+PNode >> assigned [
+
+	^ assigned
+]
+
+{
+	#category : #diffing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:37'
+}
+PNode >> assigned: aBlock [
+
+	(aBlock notNil and: [self treeLabel ~= aBlock treeLabel]) ifTrue: [self halt].
+	assigned := aBlock
+]
+
 { #category : #'as yet unclassified' }
 PNode >> atField: aSymbol [
 
@@ -704,6 +723,15 @@ PNode >> isLeafIdentifier [
 	^ self contents anySatisfy: [:c | c isLetter]
 ]
 
+{
+	#category : #diffing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:37'
+}
+PNode >> isLiterallyEqual: aNode [
+
+	^ self literalHash = aNode literalHash
+]
+
 { #category : #hierarchy }
 PNode >> isOrHasParent: aCollectionOrSymbol [
 
@@ -760,6 +788,34 @@ PNode >> lastDeepBaseChild [
 PNode >> lastDeepChild [
 
 	^ self children ifNotEmpty: [:c | c last lastDeepChild] ifEmpty: [self]
+]
+
+{
+	#category : #diffing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:38'
+}
+PNode >> literalHash [
+
+	^ literalHash
+		ifNil: [literalHash := self baseChildren inject: 0 into: [:compound :node | compound + node literalHash]]
+]
+
+{
+	#category : #diffing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:39'
+}
+PNode >> literalMatch [
+
+	^ literalMatch
+]
+
+{
+	#category : #diffing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:38'
+}
+PNode >> literalMatch: aBoolean [
+
+	literalMatch := aBoolean
 ]
 
 {
@@ -1188,6 +1244,25 @@ PNode >> shallowCopyBlock [
 		highlight: highlight
 ]
 
+{
+	#category : #diffing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:37'
+}
+PNode >> share [
+
+	^ self valueOfProperty: #share
+]
+
+{
+	#category : #diffing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:38'
+}
+PNode >> share: aShare [
+
+	self assert: (aShare class = PSubtreeShare or: [aShare isNil]).
+	share := aShare
+]
+
 { #category : #'as yet unclassified' }
 PNode >> showInQuery [
 
@@ -1252,6 +1327,19 @@ PNode >> statementWithTerminatorRange [
 PNode >> statements [
 
 	^ self childSandblocks
+]
+
+{
+	#category : #diffing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:38'
+}
+PNode >> structureHash [
+
+	^ structureHash ifNil: [ | writer |
+		writer := #[] writeStream.
+		writer nextPutAll: self type.
+		self baseChildren do: [:c | writer nextLittleEndianNumber: 4 put: c structureHash].
+		structureHash := SecureHashAlgorithm new hashStream: writer contents readStream]
 ]
 
 { #category : #'as yet unclassified' }
@@ -1353,6 +1441,25 @@ PNode >> type: aSymbol [
 
 	type := aSymbol.
 	
+	
+]
+
+{
+	#category : #diffing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:37'
+}
+PNode >> unassignTree [
+
+	self assigned assigned: nil.
+	self assigned: nil
+]
+
+{
+	#category : #diffing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:37'
+}
+PNode >> uri [
+
 	
 ]
 
