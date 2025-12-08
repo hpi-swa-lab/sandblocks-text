@@ -1,4 +1,4 @@
 Package {
-	#name : #'Painting-Diff',
-	#'squeak_changestamp' : true
+	#'squeak_changestamp' : true,
+	#name : #'Painting-Diff'
 }

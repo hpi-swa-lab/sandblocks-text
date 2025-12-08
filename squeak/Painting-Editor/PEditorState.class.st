@@ -15,31 +15,30 @@ Class {
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 12/8/2025 17:51'
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:02'
 }
 PEditorState class >> example [
 
 	| e testExt container |
-	testExt := PExtension new
-		registerReplacement: (PReplacementDefinition new
-			name: 'test';
-			model: SBJavascript;
-			query: {[:x | x type = #method_definition]};
-			init: [:node :replacement | replacement addMorphBack: replacement createShard]
-			update: [:node :replacement | replacement firstSubmorph nodes: {(node queryFirst: '(method_definition) @')}]).
+	testExt := PExtension new registerReplacement: (PReplacementDefinition new
+		name: 'test';
+		model: PSmalltalkParser;
+		query: {[:x | x type = #message and: [x baseChildren second contents = '{sbWatch}']]};
+		init: [:node :replacement | replacement addMorphBack: replacement createShard]
+			update: [:node :replacement | replacement firstSubmorph nodes: {node baseChildren first}]).
 	
 	e := PEditorState new.
 	e rootShard extensions: [{testExt}].
-	e sourceString: 'class A {
-		constructor() {
-			console.log("b");
-		}
-	}'.
+	e sourceString: 'test
 
+	(2 + 
+
+8) sbWatch'.
+	
 	container := Morph new
 		addMorphBack: e rootShard;
 		layoutPolicy: TableLayout new;
-		color: Color white;
+		color: (Color r: 1 g: 1 b: 1);
 		hResizing: #shrinkWrap;
 		vResizing: #shrinkWrap;
 		openInWindow
