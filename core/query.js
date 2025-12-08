@@ -215,23 +215,36 @@ export function getObjectField(obj, fieldName) {
   return res ? res : "";
 }
 
-export function nodesWithWhitespace(nodes, ignoreLeft = false) {
+export function nodesWithWhitespace(nodes) {
   if (!Array.isArray(nodes)) nodes = [nodes];
-  return nodes.length === 0
-    ? []
-    : [
-        ...(ignoreLeft
-          ? []
-          : takeWhile(
-              nodes[0].parent.children
-                .slice(0, nodes[0].siblingIndex)
-                .reverse(),
-              (c) => c.isWhitespace(),
-            )),
-        ...nodes,
-        ...takeWhile(
-          last(nodes).parent.children.slice(last(nodes).siblingIndex + 1),
-          (c) => c.isWhitespace(),
-        ),
-      ];
+  if (nodes.length === 0) return [];
+
+  const leftWhitespace = takeWhile(
+    nodes[0].parent.children.slice(0, nodes[0].siblingIndex).reverse(),
+    (c) => c.isWhitespace(),
+  );
+
+  // Only include left whitespace if it's not indentation and is more than one space
+  const shouldIncludeLeft = leftWhitespace.some((node) => {
+    if (!node.isText) return false;
+    const text = node.text;
+
+    // Check if this is indentation (starts at beginning of line)
+    const isIndentation = node.previousSiblingNode === null ||
+                          node.previousSiblingNode.text?.includes('\n');
+
+    return !isIndentation && text.length > 1;
+  });
+
+  // Always include right whitespace
+  const rightWhitespace = takeWhile(
+    last(nodes).parent.children.slice(last(nodes).siblingIndex + 1),
+    (c) => c.isWhitespace(),
+  );
+
+  return [
+    ...(shouldIncludeLeft ? leftWhitespace : []),
+    ...nodes,
+    ...rightWhitespace,
+  ];
 }
