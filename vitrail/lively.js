@@ -25,9 +25,13 @@ export async function addVitrailToLivelyEditor(
     // Function to get cm safely (for shards that might not be ready)
     const getCm = () => livelyCodeMirror.editor;
 
+    // Use the CodeMirror wrapper element as the view for proper DOM containment
+    // This ensures replacements inserted via markText are properly contained
+    const view = cm ? cm.getWrapperElement() : livelyCodeMirror;
+
     const pane = new Pane({
       vitrail,
-      view: livelyCodeMirror,
+      view: view,
       host: livelyCodeMirror,
       fetchAugmentations,
       getLocalSelectionIndices: () => {
