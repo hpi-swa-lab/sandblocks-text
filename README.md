@@ -1,12 +1,11 @@
 # Getting Started
 
-1. Open `index.html` in a browser (tested on Firefox 145.0.1 and Chrome 142.0.7444.175). Interact with the nested editor widgets. (This is the CodeMirror v6 implementation.)
-2. Lively TODO (This is the lively4 implementation.)
-3. Squeak TODO (This is the Squeak/Smalltalk implementation.)
+1. Run `docker image load < hybridse.tar`, then `docker run -p 8080:9005 lively4-artifact`
+2. Open [http://localhost:8080/lively4-core/start.html?load=http://localhost:8080/sandblocks-text-artifact/lively-demo.md]() in a browser, which should open a file browser-like interface on the left with an editor on the right (tested on Chrome 142.0.7444.175).
 
-# Overview of Claims and Step-by-Step Instructions
+# Overview of Claims
 
-As the step-by-step instructions for all but one claim are very short, we merged the instructions with the overview of claims.
+Since the steps to reproduce our claims are short, we merged the step-by-step instructions with the list of claims for a better overview.
 
 ## Claim: Section 4.1 --- Structure Tracking
 - temporary syntax errors leave tools intact
@@ -18,13 +17,19 @@ To reproduce:
 3. Invoke the Web Browser's cut shortcut (Ctrl/Cmd+x or right-click). The Watch should remain in the text buffer and a notice should appear that there are pending changes.
 4. Navigate to the start of the file (before the 3).
 5. Invoke the Web Browser's paste (Ctrl+Cmd v or right-click). The watch should move to the start and the pending changes notice should disappear.
+6. Insert syntax errors near the watch (e.g., add a `2` just before the watch element) and observe the pending changes notice appearing until the expression is valid again (e.g., add a `+` after the just-inserted `2`).
 
 ## Claim: Section 4.2 --- Nested Editors
-- selection is kept intact when a tool appears
+- leading and trailing whitespace handling trims more than one whitespace
 - indentation can be removed
-- leading and trailing whitespace handling
 
-TODO
+To reproduce leading/trailing whitespace handling:
+1. Open `index.html` (see Getting Started).
+2. In the "Watch" example, add a space to the right of the `2 + 2` expression, inside the watch, and continue typing `+ 3`.
+
+To reproduce indentation removal:
+1. Open `index.html` (see Getting Started).
+2. In the "Browser" example, select the "constructor" method. Its base indentation has been replaced with a tab-icon.
 
 ## Claim: Section 4.3 --- Structured Access
 - 4.3.1 support for accessing dynamic information
@@ -35,9 +40,9 @@ TODO
 3. Editing Scenarios: inspect the three editing scenarios, shown here as code snippets that use the API that we provide to users of the framework. The scenarios are editable and are re-evaluated on change.
 
 ## Claim: Section 5 --- Platform Support
-- Codemirror
-- lively4
-- Squeak/Smalltalk
+- Codemirror v6 implementation
+- lively4 implementation
+- Squeak/Smalltalk implementation
 
 To reproduce:
 1. Follow the instructions for Getting Started, which allows to open all three implementations.
@@ -49,14 +54,10 @@ To reproduce:
 - Section 6.4: Livelits
 
 1. Follow step 1 of Getting Started. The website includes the four case studies described in Section 6.
-
 TODO specific steps to use?
 
 
-
-
 TODOs
-* replacing w/ parens
 * insert algo: Should there be multiple repeating structures in the same definition, which tends to be rare, the user can specify a function that selects the desired one given all options, for example, based on the type of node that is repeated.
-* whitespace detect: To mitigate this issue, we employ a default heuristic to always pull in whitespace to the right of a fragment's expression but only pull in whitespace to the left of a fragment's expression if it is not indentation and if it is more than one space character.
+* not loading indent markers and live results on first load
 * mehrere klassen, bessere namen im browser

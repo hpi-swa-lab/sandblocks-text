@@ -1,0 +1,34 @@
+GSMetadata {
+	#version : 1,
+	#mappers : [
+		GSTonelMapper {
+			#version : 1,
+			#package : MCPackage {
+				#name : 'Painting-Diff'
+			},
+			#path : FSAbsolutePath [
+				'squeak'
+			]
+		},
+		GSTonelMapper {
+			#version : 1,
+			#package : MCPackage {
+				#name : 'Painting-Editor'
+			},
+			#path : FSAbsolutePath [
+				'squeak'
+			]
+		},
+		GSTonelMapper {
+			#version : 1,
+			#package : MCPackage {
+				#name : 'oRAGle'
+			},
+			#path : FSAbsolutePath [
+				'sandblocks',
+				'oRAGle'
+			]
+		}
+	],
+	#name : 'sb-text'
+}
