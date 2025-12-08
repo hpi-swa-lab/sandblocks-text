@@ -326,18 +326,6 @@ PNode >> addBaseChild: aNode at: aNumber [
 	aNode baseParent: self
 ]
 
-{ #category : #'query actions' }
-PNode >> addOwnSuggestions: aCollection label: aString [
-
-	self addSuggestions: ((self class sortedSuggestions: aCollection for: self contents addAll: false max: 10) collect: [:sel | DCSuggestionItem new selector: sel label: aString source: sel])
-]
-
-{ #category : #'query actions' }
-PNode >> addSuggestions: aCollection [
-
-	self queryState addSuggestions: aCollection for: self
-]
-
 { #category : #'as yet unclassified' }
 PNode >> alias [
 
@@ -389,14 +377,6 @@ PNode >> allDomainBlocksWithDepthDo: aBlock leafDo: anotherBlock depth: aNumber 
 	aBlock value: self value: aNumber
 ]
 
-{ #category : #'as yet unclassified' }
-PNode >> allLayoutMorphsDo: aBlock [
-
-	aBlock value: self.
-	self submorphs do: [:m | m allLayoutMorphsDo: aBlock].
-	aBlock value: {#leave. self}
-]
-
 { #category : #hierarchy }
 PNode >> allParents [
 
@@ -416,13 +396,6 @@ PNode >> allParentsUpTo: aBlock [
 		parents add: current.
 		current = aBlock ifTrue: [^ parents].
 		current := current parent] repeat
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> allTextMorphsDo: aBlock [
-	"iterate over morphs, not children, as we're looking for visible text morphs"
-
-	self allMorphsDo: [:m | m isTextMorph ifTrue: [aBlock value: m]]
 ]
 
 {
@@ -455,27 +428,6 @@ PNode >> applyBlock [
 PNode >> applyBlockWithCursor: aNumber [
 
 	^ [:new :edit :undo | self applyEdit: edit source: new cursorAt: aNumber undoDo: undo]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> applyEditsIn: newTree to: oldTree [
-
-	true ifTrue: [
-		oldTree allBaseChildrenDo: [:m | m clearDiffCache].
-		^ DCTrueDiff new compare: oldTree to: newTree].
-	DCMatcher new performEditsIn: newTree to: oldTree
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> artefactChanged: aMethodBlock [
-
-	(self containingArtefact = aMethodBlock and: [self isRootBlock]) ifTrue: [self queryState updateChangeQueries]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> artefactSaved: aMethodBlock [
-
-	(self containingArtefact = aMethodBlock and: [self isRootBlock]) ifTrue: [self queryState updateQueriesFor: #save at: self]
 ]
 
 {
@@ -511,12 +463,6 @@ PNode >> atType: aSymbol [
 PNode >> atType: aSymbol ifPresent: aBlock ifAbsent: anotherBlock [
 
 	^ self children detect: [:c | c type = aSymbol] ifFound: aBlock ifNone: anotherBlock
-]
-
-{ #category : #'query actions' }
-PNode >> attachHighlight [
-
-	self queryState highlight: self
 ]
 
 {
@@ -597,36 +543,6 @@ PNode >> blockFor: aRange [
 	^ nil
 ]
 
-{ #category : #'as yet unclassified' }
-PNode >> borderVertices [
-
-	| level endLevel corners first last |
-	corners := self cornerMorphs.
-	first := corners first.
-	last := corners last.
-	
-	level := 0 asEdgeInsets.
-	first = self ifFalse: [
-		first firstOwnerSuchThat: [:o |
-			level := level + o layoutInset asEdgeInsets.
-			o = self]].
-	endLevel := 0 asEdgeInsets.
-	last = self ifFalse: [
-		last firstOwnerSuchThat: [:o |
-			endLevel := endLevel + o layoutInset asEdgeInsets.
-			o = self]].
-	
-	^ {
-		self bounds bottomLeft.
-		self left @ (first bottom + level bottom).
-		first left - level left @ (first bottom + level bottom).
-		first left - level left @ self top.
-		self bounds topRight.
-		self right @ (last top - endLevel top).
-		last right + endLevel right @ (last top - endLevel top).
-		last right + endLevel right @ self bottom}
-]
-
 {
 	#category : #'as yet unclassified',
 	#'squeak_changestamp' : 'tobe 4/21/2024 18:03'
@@ -688,42 +604,9 @@ PNode >> clearDiffCache [
 ]
 
 { #category : #'as yet unclassified' }
-PNode >> clearInput [
-	<action>
-
-	self infoForEditDo: [:source :textMorph | self class replace: (self activeTextMorph ifNil: [self]) range in: source with: '' do: self applyBlock]
-]
-
-{ #category : #grammar }
-PNode >> commandForInsert: aNode at: aNumber [
-
-	| children |
-	children := self childNodes readStream.
-	self match: self grammarRule with: children do: [:child :rule | {rule. child}]
-]
-
-{ #category : #'as yet unclassified' }
 PNode >> compatibleWithType: aSymbol [
 
 	^ self type = aSymbol
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> containingArtefact [
-
-	^ self isArtefact
-		ifTrue: [self]
-		ifFalse: [self parent ifNotNil: [:b | b containingArtefact]]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> containsPoint: aPoint [
-
-	| inside |
-	(super containsPoint: aPoint) ifFalse: [^ false].
-	inside := false.
-	self borderVertices overlappingPairsLoopedDo: [:a :b | (a y > aPoint y ~= (b y > aPoint y) and: [aPoint x < (b x - a x * (b y - a y) / (b y - a y) + a x)]) ifTrue: [inside := inside not]].
-	^ inside
 ]
 
 { #category : #'as yet unclassified' }
@@ -737,130 +620,6 @@ PNode >> copyRangesFrom: newTree to: oldTree [
 
 	oldTree range: newTree range.
 	newTree children with: oldTree children do: [:a :b | self copyRangesFrom: a to: b]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> currentTextMorph [
-
-	self submorphsDo: [:m | m isTextMorph ifTrue: [^ m]].
-	^ nil
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> cursorPositionsDo: aBlock shallow: aBoolean [
-
-	true ifTrue: [^ super cursorPositionsDo: aBlock shallow: aBoolean].
-	
-	aBlock value: (SBCursorSelect new block: self).
-	self match: self grammarRule with: self childNodes readStream do: [:child :rule |
-		(rule type = 'SYMBOL' or: [rule type = 'ALIAS'])
-			ifTrue: [aBoolean ifFalse: [child cursorPositionsDo: aBlock shallow: aBoolean]]
-			ifFalse: [
-				(child containingSandblock startInputCommandIn: child) ifNotNil: [:command |
-					aBlock value: (SBCursorText new
-						block: child containingSandblock;
-						currentCommand: command)]]]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> deleteAfterCursor [
-	<action>
-
-	self infoForEditDo: [:source :textMorph :cursorIndex | self class deleteFrom: source at: cursorIndex + 1 do: self applyBlock].
-	self batchedChangeStep
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> deleteBeforeCursor [
-	<action>
-
-	self infoForEditDo: [:source :textMorph :cursorIndex | self class deleteFrom: source at: cursorIndex do: self applyBlock].
-	self batchedChangeStep
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> deleteBlock [
-	<action>
-
-	self isArtefact ifTrue: [^ super deleteBlock].
-	
-	self infoForEditDo: [:source :textMorph :cursorIndex | | delRange |
-		delRange := textMorph range.
-		self trailingTerminator ifNotNil: [:t | | clearUntil |
-			clearUntil := (t nextMorphThat: [:m | m submorphAfter isNil or: [m submorphAfter isExtra not]]) ifNil: [t].
-			delRange := SBTSRange merging: {delRange. clearUntil range}].
-		self class replace: delRange in: source with: '' do: self applyBlock]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> deleteBlockWithCopy [
-	<action>
-
-	self sandblockEditor copyBuffer: self preferQuick: true.
-	self deleteBlock
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> doLayoutIn: layoutBounds [
-
-	| info |
-	self isLayoutRoot ifFalse: [
-		" if we've been called as a child, just assign whatever we have stored. the root will take of correcting things if needed "
-		fullBounds := self bounds.
-		^ self].
-	
-	info := DCLayoutInfo new layoutRoot: self at: layoutBounds origin.
-	
-	self assert: fullBounds notNil
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> doubleClick: anEvent [
-
-	self queryState updateQueriesFor: #doubleClick at: self
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> drawBackgroundOn: aCanvas [
-
-	| policy |
-	policy := self colorPolicy.
-	self allMorphsDo: [:c |
-		c isLineBreak ifTrue: [ | level |
-			level := 0.
-			c firstOwnerSuchThat: [:o |
-				level := level + 1.
-				o = self].
-			aCanvas
-				drawPolygon: self borderVertices
-				color: self drawnColor
-				borderWidth: (policy borderWidthForBlock: self)
-				borderColor: (policy borderColorForBlock: self).
-			^ self]].
-	
-	^ aCanvas
-		frameAndFillRoundRect: self bounds
-		radius: policy cornerRadius
-		fillStyle: self drawnColor
-		borderWidth: (policy borderWidthForBlock: self)
-		borderColor: (policy borderColorForBlock: self)
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> drawnColor [
-
-	^ self prefersNoBorder
-		ifTrue: [super drawnColor alpha: 0]
-		ifFalse: [super drawnColor]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> emphasis [
-
-	self highlight ifNotNil: [:h |
-		(h beginsWith: 'major_declaration') ifTrue: [^ TextEmphasis bold].
-		self type = #comment ifTrue: [^ TextEmphasis italic]].
-	^ self colorPolicy defaultEmphasis
 ]
 
 { #category : #'as yet unclassified' }
@@ -932,67 +691,10 @@ PNode >> getSourceStringAndMark [
 	^ stream contents
 ]
 
-{ #category : #'as yet unclassified' }
-PNode >> grammarHandler [
-
-	^ DCGrammarHandler new
-]
-
 { #category : #grammar }
 PNode >> grammarRule [
 
 	^ (self language grammarRule: self type) ifNil: [self resolveAlias: self type in: self owner grammarRule]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> handleInsertEvent: anEvent in: textMorph [
-
-	| pairMap input |
-	pairMap := self pairMap.
-	input := anEvent keyCharacter asString.
-	pairMap at: input ifPresent: [:complete |
-		"do not autocomplete quotes in words"
-		((textMorph characterBeforeCursor
-			ifNotNil: #isAlphaNumeric
-			ifNil: [false]) and: [complete = '''']) ifTrue: [^ textMorph insertString: input].
-		
-		"do not autocomplete after backslash"
-		textMorph characterBeforeCursor = $\ ifTrue: [^ textMorph insertString: input].
-		
-		^ textMorph
-			insertString: input, complete;
-			moveCursor: -1].
-	
-	SBToggledCode comment: '' active: 0 do: {
-		[
-			(pairMap keyAtValue: input ifAbsent: [nil]) ifNotNil: [:key |
-				"jump to a matching closing bracket just after us"
-				(textMorph nextMorphThat: #isTextMorph) ifNotNil: [:m |
-					m contents = input ifTrue: [
-						^ self sandblockEditor
-							startInput: m containingSandblock
-							at: 900000000
-							replacingContents: false
-							in: m]].
-				
-				"skip inserting closing parens that already exist"
-				(textMorph contents notEmpty and: [textMorph contents includesSubstring: input]) ifTrue: [^ self]]]}.
-	
-	^ super keyStroke: anEvent
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> handleMouseEnter: anEvent [
-
-	super handleMouseEnter: anEvent.
-	self queryState updateQueriesFor: #hover at: self
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> handleMouseLeave: anEvent [
-
-	super handleMouseLeave: anEvent.
-	self addAlarm: #triggerEvent: with: #mouseLeaveNextTick after: 1
 ]
 
 { #category : #hierarchy }
@@ -1080,170 +782,6 @@ PNode >> initialize [
 	baseChildren := OrderedCollection new: 1
 ]
 
-{ #category : #'as yet unclassified' }
-PNode >> inputClosestTextMorphTo: cursorPosition [
-
-	| best bestDistance atStart |
-	best := nil.
-	bestDistance := Float infinity.
-	atStart := false.
-	
-	"match on same line"
-	self allChildrenDo: [:t |
-		t isTextMorph ifTrue: [
-			t range start line = cursorPosition line ifTrue: [ | distance |
-				distance := (t range start character - cursorPosition character) abs.
-				distance < bestDistance ifTrue: [
-					bestDistance := distance.
-					atStart := true.
-					best := t]].
-			t range end line = cursorPosition line ifTrue: [ | distance |
-				distance := (t range end character - cursorPosition character) abs.
-				distance < bestDistance ifTrue: [
-					bestDistance := distance.
-					atStart := false.
-					best := t]]]].
-	
-	"match on different line"
-	best ifNil: [
-		self allChildrenDo: [:t |
-			t isTextMorph ifTrue: [ | distance |
-				distance := (t range start line - cursorPosition line) abs min: (t range end line - cursorPosition line) abs.
-				distance < bestDistance ifTrue: [
-					bestDistance := distance.
-					atStart := false.
-					best := t]]]].
-	
-	best ifNotNil: [
-		self sandblockEditor
-			startInput: best containingSandblock
-			at: (atStart ifTrue: [1] ifFalse: [900000000])
-			replacingContents: false
-			in: best]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> insert: aString [
-
-	self infoForEditDo: [:source :textMorph :cursorIndex | self class insert: aString in: source at: cursorIndex + 1 do: self applyBlock].
-	self batchedChangeStep
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> insert: aString atChildIndex: aNumber [
-
-	self infoForEditDo: [:source :textMorph :cursorIndex |
-		self class
-			insert: aString
-			in: source
-			at: (self children at: aNumber) range start index + 1
-			do: self applyBlock].
-	self batchedChangeStep
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> insertAfter: aString [
-
-	self infoForEditDo: [:source :textMorph :cursorIndex |
-		self class
-			insert: aString
-			in: source
-			at: self range end index + 1
-			do: (self applyBlockWithCursor: self range end index)].
-	self batchedChangeStep
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> insertCommandRequest: aMorph near: aBlock before: aBoolean [
-
-	^ nil
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> insertStatementAboveOrBelow: anAboveBoolean [
-
-	| lineBreak target |
-	target := self activeTextMorph ifNil: [self].
-	lineBreak := anAboveBoolean
-		ifTrue: [target previousMorphThat: [:c | c isLineBreak]]
-		ifFalse: [target nextMorphThat: [:c | c isLineBreak]].
-	
-	lineBreak ifNil: [^ self].
-	lineBreak containingSandblock containingArtefact = self containingArtefact ifFalse: [^ self].
-	
-	self infoForEditDo: [:source :textMorph :cursorIndex |
-		self class
-			insert: String cr, lineBreak getIndentString
-			in: source
-			at: lineBreak range start index + 1
-			do: (self applyBlockWithCursor: lineBreak range start index + 2)]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> insertStatementHasCandidate [
-
-	^ true
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> installActiveReplacement: aBlock [
-
-	self sandblockEditor do: (SBCombinedCommand newWith: {
-		SBReplaceCommand new target: self replacer: (aBlock source: self).
-		SBMutatePropertyCommand new
-			target: self;
-			selector: #replacedParent;
-			value: aBlock})
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> installActiveReplacement: aBlock do: aClosure [
-
-	self sandblockEditor do: (SBCombinedCommand newWith: {
-		SBReplaceCommand new target: self replacer: (aBlock source: self).
-		SBMutatePropertyCommand new
-			target: self;
-			selector: #replacedParent;
-			value: aBlock}).
-	aClosure value: aBlock
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> installPassiveReplacement: aBlock [
-
-	aBlock source: self.
-	self replaceNodeBy: aBlock.
-	self replacedParent: aBlock
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> installPassiveReplacement: aBlock do: aClosure [
-
-	aBlock source: self.
-	self replaceNodeBy: aBlock.
-	self replacedParent: aBlock.
-	aClosure value: aBlock
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> intoWorld: aWorld [
-
-	super intoWorld: aWorld.
-	
-	self isRootBlock ifTrue: [
-		self sandblockEditor
-			when: #selectionChanged
-			send: #updateSelectionQueries
-			to: self queryState.
-		self sandblockEditor
-			when: #batchedChange
-			send: #updateTypeQueries
-			to: self queryState.
-		self queryState
-			updateQueriesFor: #open;
-			updateQueriesFor: #always]
-]
-
 { #category : #hierarchy }
 PNode >> is: aCollectionOrSymbol [
 
@@ -1254,36 +792,10 @@ PNode >> is: aCollectionOrSymbol [
 	^ matches includes: self type
 ]
 
-{ #category : #'as yet unclassified' }
-PNode >> isArtefact [
-
-	^ self isRootBlock and: [self valueOfProperty: #isArtefact ifAbsent: [false]]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> isBlockBody [
-
-	^ self language ifNotNil: [:l | l blockBodyTypes includes: self type] ifNil: [false]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> isExpression [
-
-	(self type = #ERROR and: [self submorphCount = 1]) ifTrue: [^ self firstSubmorph isExpression].
-	
-	^ self language expressionTypes anySatisfy: [:type | self language instance grammar is: self type subtypeOf: type]
-]
-
 { #category : #testing }
 PNode >> isExtra [
 
 	^ false
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> isLayoutRoot [
-
-	^ self owner ifNotNil: [:o | o class ~= self class] ifNil: [true]
 ]
 
 { #category : #'as yet unclassified' }
@@ -1321,37 +833,6 @@ PNode >> isRootBlock [
 ]
 
 { #category : #'as yet unclassified' }
-PNode >> isTSBlock [
-
-	^ true
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> isTSMorph [
-
-	^ true
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> keyStroke: anEvent [
-
-	| editor artefact |
-	editor := self sandblockEditor.
-	artefact := self containingArtefact.
-	
-	self infoForEditDo: [:source :textMorph :cursorIndex | | input |
-		input := anEvent keyCharacter asString.
-		(input first isPrintable and: [anEvent commandKeyPressed not]) ifTrue: [
-			(self adaptInput: input in: source at: cursorIndex textMorph: textMorph event: anEvent) ifNotEmpty: [:text |
-				self class
-					insert: (self maybeAddSeparator: text textMorph: textMorph)
-					in: source
-					at: cursorIndex + 1
-					do: (self applyBlockWithCursor: cursorIndex + (text indexOf: anEvent keyCharacter))]]].
-	editor batchedChangeStep: artefact
-]
-
-{ #category : #'as yet unclassified' }
 PNode >> language [
 
 	^ language ifNil: [self owner ifNotNil: #language]
@@ -1379,15 +860,6 @@ PNode >> lastDeepBaseChild [
 PNode >> lastDeepChild [
 
 	^ self children ifNotEmpty: [:c | c last lastDeepChild] ifEmpty: [self]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> layoutInset [
-
-	false ifTrue: [^ 5 sbScaled].
-	self isBlockBody ifTrue: [^ (4 @ 3) sbScaled].
-	
-	^ (2 @ (self submorphCount > 3 ifTrue: [2] ifFalse: [0])) sbScaled
 ]
 
 {
@@ -1553,26 +1025,6 @@ PNode >> orParentExpression [
 ]
 
 { #category : #'as yet unclassified' }
-PNode >> outOfWorld: aWorld [
-
-	super outOfWorld: aWorld.
-	
-	self isRootBlock ifTrue: [
-		self queryState onDelete.
-		self sandblockEditor
-			removeActionsWithReceiver: self queryState forEvent: #selectionChanged;
-			removeActionsWithReceiver: self queryState forEvent: #batchedChange]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> ownerWithForegroundColor [
-
-	^ self highlight = #'_sb_none'
-		ifTrue: [self owner ifNotNil: [:o | o ownerWithForegroundColor]]
-		ifFalse: [self]
-]
-
-{ #category : #'as yet unclassified' }
 PNode >> pairMap [
 
 	^ Dictionary newFrom: {'(' -> ')'. '''' -> ''''. '"' -> '"'. '`' -> '`'. '{' -> '}'. '[' -> ']'}
@@ -1591,58 +1043,6 @@ PNode >> parent [
 PNode >> parentNode [
 
 	^ self parentSandblock ifNotNil: [:p | p isTSBlock ifTrue: [p] ifFalse: [nil]]
-]
-
-{ #category : #'actions smalltalk' }
-PNode >> pasteReplace [
-	<action>
-
-	self infoForEditDo: [:source :textMorph :cursorIndex | | str |
-		str := Clipboard clipboardText string.
-		
-		cursorIndex class = SBTSRange
-			ifTrue: [self class replace: cursorIndex in: source with: str do: self applyBlock]
-			ifFalse: [self class insert: str in: source at: cursorIndex + 1 do: self applyBlock]]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> performAction: aSymbol [
-
-	
-	(self queryState performShortcut: aSymbol for: self) ifTrue: [^ true].
-	
-	(super performAction: aSymbol) ifTrue: [^ true].
-	
-	^ false
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> placeCursorIn: newTree at: newIndex [
-
-	newIndex ifNil: [^ self].
-	
-	^ newIndex isNumber ifTrue: [newTree startInputAtSourceIndex: newIndex] ifFalse: [ | target |
-		target := (newTree blockFor: newIndex) ifNil: [^ self].
-		target isTextMorph
-			ifTrue: [
-				newTree sandblockEditor
-					startInput: target containingSandblock
-					at: 1
-					replacingContents: false
-					in: target]
-			ifFalse: [newTree sandblockEditor selectNoInput: target]]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> preferredColorIn: aColorPolicy [
-
-	^ self slot preferredColorIn: aColorPolicy for: self highlight
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> prefersNoBorder [
-
-	^ self isPart
 ]
 
 { #category : #'as yet unclassified' }
@@ -1816,54 +1216,10 @@ PNode >> range: aRange [
 	range := aRange
 ]
 
-{ #category : #'query actions' }
-PNode >> registerShortcut: aSymbol do: aBlock [
-
-	" a previous shortcut may have removed us from the world, abort "
-	(self rootBlock isNil or: [self rootBlock isInWorld not]) ifTrue: [^ self].
-	
-	self queryState tryShortcut: aSymbol do: aBlock
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> rejectsEvent: anEvent [
-
-	^ (self containsPoint: anEvent position) not
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> replace: oldTree with: newTree [
-
-	^ SBToggledCode comment: '' active: 1 do: {
-		[ | editor |
-			editor := self sandblockEditor.
-			DCMatcher new doCommandForEditsIn: newTree to: oldTree in: editor.
-			self sandblockEditor do: (SBCombinedCommand newWith: {
-				SBMutatePropertyCommand new
-					target: oldTree;
-					selector: #privateSource;
-					value: newTree privateSource}).
-			oldTree].
-		[
-			self sandblockEditor do: (SBReplaceCommand new
-				target: oldTree replacer: newTree;
-				shouldMergeWithNext: true).
-			newTree
-				position: oldTree position;
-				width: oldTree width;
-				yourself]}
-]
-
 { #category : #'as yet unclassified' }
 PNode >> replaceWith: aString [
 
 	self infoForEditDo: [:source :textMorph :cursorIndex | self class replace: textMorph range in: source with: aString do: self applyBlock]
-]
-
-{ #category : #'query actions' }
-PNode >> reportError: anError [
-
-	self queryState reportError: anError for: self
 ]
 
 { #category : #grammar }
@@ -1921,53 +1277,6 @@ PNode >> run: aCollection [
 ]
 
 { #category : #'as yet unclassified' }
-PNode >> sandblockEditor [
-
-	" allow embedded nodes to access the editor "
-	^ (self owner ifNil: [self parent]) ifNotNil: [:o | o sandblockEditor]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> saveTryFixing: aFixBoolean quick: aQuickBoolean [
-
-	self queryState errors ifNotEmpty: [:errors | aFixBoolean ifTrue: [errors do: [:error | error tryFixIfFail: [^ false]]] ifFalse: [^ false]].
-	^ true
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> selectRightMostBlock [
-	<action>
-	<inputAction>
-
-	| lineBreak |
-	(self activeTextMorph notNil and: [self activeTextMorph isLineBreak]) ifTrue: [^ self].
-	
-	lineBreak := (self activeTextMorph ifNil: [self]) nextMorphThat: [:m | m isLineBreak].
-	(lineBreak isNil or: [lineBreak containingSandblock containingFloat ~= self containingFloat]) ifTrue: [^ self selectLast].
-	self sandblockEditor
-		startInput: lineBreak containingSandblock
-		at: 1
-		replacingContents: false
-		in: lineBreak
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> selectStartOfStatement [
-	<action>
-	<inputAction>
-
-	| lineBreak first |
-	lineBreak := (self activeTextMorph ifNil: [self]) previousMorphThat: [:m | m isLineBreak].
-	(lineBreak isNil or: [lineBreak containingSandblock containingFloat ~= self containingFloat]) ifTrue: [^ self containingFloat firstDeepChild startInputAtStart].
-	first := lineBreak nextMorphThat: [:m | m isExtra not].
-	self sandblockEditor
-		startInput: first containingSandblock
-		at: 1
-		replacingContents: false
-		in: first
-]
-
-{ #category : #'as yet unclassified' }
 PNode >> shallowCopyBlock [
 
 	^ self class new
@@ -2001,12 +1310,6 @@ PNode >> siblingIndex [
 ]
 
 { #category : #'as yet unclassified' }
-PNode >> slot [
-
-	^ DCMockSlot new for: self
-]
-
-{ #category : #'as yet unclassified' }
 PNode >> smallestBlockEncompassig: aRange [
 
 	| min |
@@ -2037,37 +1340,6 @@ PNode >> sourceString [
 ]
 
 { #category : #'as yet unclassified' }
-PNode >> startInputAtSourceIndex: aNumber [
-
-	self allTextMorphsDo: [:m | | range |
-		range := m isTSMorph
-			ifTrue: [m range]
-			ifFalse: [(m ownerSatisfying: [:o | o isTSMorph]) ifNotNil: [:o | o range]].
-		(range notNil and: [range end index >= aNumber]) ifTrue: [
-			^ aNumber <= range end index
-				ifTrue: [
-					"we're now inside!"
-					self sandblockEditor
-						startInput: m containingSandblock
-						at: aNumber - range start index + 1
-						replacingContents: false
-						in: m]
-				ifFalse: [
-					"we just went past"
-					self sandblockEditor
-						startInput: m containingSandblock
-						at: 1
-						replacingContents: false
-						in: m]]]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> startInputCommandIn: aTextMorph [
-
-	^ aTextMorph ifNotNil: [SBTextCommand new textMorph: aTextMorph] ifNil: [nil]
-]
-
-{ #category : #'as yet unclassified' }
 PNode >> statementWithTerminatorRange [
 
 	^ self trailingTerminator
@@ -2085,31 +1357,6 @@ PNode >> statements [
 PNode >> suggestions [
 
 	^ self queryState suggestionsFor: self
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> swap: aNumber [
-
-	self infoForEditDo: [:source :textMorph :cursorIndex | | pivot outerPivot |
-		pivot := (self sandblockEditor mode = #input
-			ifTrue: [textMorph]
-			ifFalse: [self]) orOwnerSuchThat: [:morph | morph owner submorphCount > 1].
-		outerPivot := pivot orOwnerSuchThat: [:morph |
-			(aNumber > 0
-				ifTrue: [morph morphAfterThat: #isSandblock]
-				ifFalse: [morph morphBeforeThat: #isSandblock]) notNil].
-		outerPivot ifNotNil: [ | target startIndex targetRange pivotRange |
-			target := aNumber > 0
-				ifTrue: [outerPivot morphAfterThat: #isSandblock]
-				ifFalse: [outerPivot morphBeforeThat: #isSandblock].
-			targetRange := target statementWithTerminatorRange.
-			pivotRange := pivot statementWithTerminatorRange.
-			startIndex := targetRange start index + (aNumber > 0 ifTrue: [targetRange size - pivotRange size] ifFalse: [0]).
-			self class
-				swap: pivotRange
-				with: targetRange
-				in: source
-				do: (self applyBlockWithCursor: (SBTSRange start: startIndex size: pivot range size))]]
 ]
 
 { #category : #'as yet unclassified' }
@@ -2209,87 +1456,9 @@ PNode >> type: aSymbol [
 ]
 
 { #category : #'as yet unclassified' }
-PNode >> typeNewLine [
-	<inputAction>
-
-	self insert: String lf
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> updateAllHighlights [
-
-	^ self slot updateAllHighlightsFor: self
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> useSuggestion: anItem [
-
-	self infoForEditDo: [:source :textMorph :cursorIndex | self class replace: textMorph range in: source with: anItem source do: self applyBlock]
-]
-
-{ #category : #'as yet unclassified' }
 PNode >> valid [
 
 	^ self type ~= 'ERROR'
-]
-
-{ #category : #'action helpers' }
-PNode >> wrapIn: aString [
-
-	self wrapWithBefore: aString after: (self pairMap at: aString)
-]
-
-{ #category : #actions }
-PNode >> wrapInBackticks [
-	<action>
-
-	self wrapIn: '`'
-]
-
-{ #category : #actions }
-PNode >> wrapInCurlyBraces [
-	<action>
-
-	self wrapIn: '{'
-]
-
-{ #category : #actions }
-PNode >> wrapInDoubleQuotes [
-	<action>
-
-	self wrapIn: '"'
-]
-
-{ #category : #actions }
-PNode >> wrapInRoundParenthesis [
-	<action>
-
-	self wrapIn: '('
-]
-
-{ #category : #actions }
-PNode >> wrapInSingleQuotes [
-	<action>
-
-	self wrapIn: ''''
-]
-
-{ #category : #actions }
-PNode >> wrapInSquareBrackets [
-	<action>
-
-	self wrapIn: '['
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> wrapWithBefore: aString after: anotherString [
-
-	self infoForEditDo: [:source :textMorph :cursorIndex |
-		self class
-			replace: textMorph range
-			in: source
-			with: aString, self sourceString, anotherString
-			do: (self applyBlockWithCursor: textMorph range start index + aString size)]
 ]
 
 { #category : #'as yet unclassified' }
