@@ -15,26 +15,19 @@ Class {
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 10/10/2025 16:51'
+	#'squeak_changestamp' : 'tobe 12/8/2025 17:51'
 }
 PEditorState class >> example [
 
-	| e removeIndentExt testExt |
-	removeIndentExt := PExtension new
-		registerReplacement: (PReplacementDefinition new
-			name: 'indent';
-			model: PWhitespaceParser;
-			query: {[:x | x type = #tab and: [x childBefore type = #newline]]};
-			init: [:node :replacement | replacement extent: 0 @ 0] update: [:node :replacement |]).
-
+	| e testExt container |
 	testExt := PExtension new
 		registerReplacement: (PReplacementDefinition new
 			name: 'test';
 			model: SBJavascript;
-			query: {[:x | x type = #program]};
-			init: [:node :replacement | replacement addMorphBack: (replacement createShard extensions: [{removeIndentExt}])]
+			query: {[:x | x type = #method_definition]};
+			init: [:node :replacement | replacement addMorphBack: replacement createShard]
 			update: [:node :replacement | replacement firstSubmorph nodes: {(node queryFirst: '(method_definition) @')}]).
-
+	
 	e := PEditorState new.
 	e rootShard extensions: [{testExt}].
 	e sourceString: 'class A {
@@ -43,7 +36,13 @@ PEditorState class >> example [
 		}
 	}'.
 
-	e rootShard openInHand
+	container := Morph new
+		addMorphBack: e rootShard;
+		layoutPolicy: TableLayout new;
+		color: Color white;
+		hResizing: #shrinkWrap;
+		vResizing: #shrinkWrap;
+		openInWindow
 ]
 
 {

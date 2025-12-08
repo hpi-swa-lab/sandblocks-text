@@ -75,7 +75,7 @@ PReplacement >> editor: anEditor [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 14:02'
+	#'squeak_changestamp' : 'tobe 12/8/2025 17:51'
 }
 PReplacement >> initialize [
 
@@ -84,6 +84,7 @@ PReplacement >> initialize [
 	self
 		hResizing: #shrinkWrap;
 		vResizing: #shrinkWrap;
+		color: Color transparent;
 		changeTableLayout
 ]
 
