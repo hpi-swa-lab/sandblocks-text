@@ -31,7 +31,6 @@ const jsAugmentations = [
 
 // expose for eval()
 window.languageFor = languageFor;
-await languageFor("python").ready();
 await languageFor("javascript").ready();
 
 function Demo() {
@@ -123,11 +122,30 @@ let color = ["color", baseline + 140, 3, ["slider", 0, 255, 1, 25][4]];`);
 
 function EditingScenarios() {
   return [
-    h('h3', {}, 'Replace with precedence'),
-    h(LiveEvalEditor, { initialText: `const program = languageFor("python").parseOffscreen('a * 4')
-const identifierA = program.children[0].children[0]
+    h('h2', {}, 'Editing Scenarios'),
+    'Below, we show program snippets that demonstrate the capabilities of the editing API. The snippets are evaluated and the result of the last expression is shown below the snippet.',
+
+    h('h3', {}, 'Replace Atom inserts Parentheses to comply with Precedence'),
+    h(LiveEvalEditor, { initialText: `const stmt = languageFor("javascript").parseOffscreen('a + 4').children[0]
+const identifierA = stmt.children[0].children[0]
 identifierA.replaceWith('2 + 3')
-program.sourceString` }),
+
+stmt.sourceString // we expect: (2 + 3) * 4` }),
+
+    h('h3', {}, 'Insert Adds Delimiters'),
+    h(LiveEvalEditor, { initialText: `const stmt = languageFor("javascript").parseOffscreen('[2, 4, 5]').children[0]
+const array = stmt.children[0]
+array.insert('3', 'expression', 1)
+
+stmt.sourceString // we expect: [2, 3,4, 5] (use of a code formatter for JavaScript would add a whitespace)` }),
+
+    h('h3', {}, 'Delete Cleans Up Delimiters'),
+    h(LiveEvalEditor, { initialText: `const stmt = languageFor("javascript").parseOffscreen('[2, 5, 3]').children[0]
+const array = stmt.children[0]
+const number = array.childBlocks[1]
+number.removeFull()
+
+stmt.sourceString // we expect: [2, 3]` }),
   ]
 }
 
@@ -142,14 +160,14 @@ function LiveEvalEditor({ initialText }) {
     }
   });
 
-  return [
+  return h("div", {style: 'border: 1px solid gray; padding: 0.5rem'},
     h(CodeMirrorWithVitrail, {
       value: text,
       fetchAugmentations: () => jsAugmentations,
       cmExtensions: [...baseCMExtensions, javascript()],
     }),
-    h("div", {}, "Result: " + result.value),
-  ];
+    h("div", {}, "Eval: " + result.value),
+  );
 }
 
 render(h(Demo), document.body);

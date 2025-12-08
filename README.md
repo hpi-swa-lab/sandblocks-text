@@ -27,10 +27,12 @@ To reproduce:
 TODO
 
 ## Claim: Section 4.3 --- Structured Access
-- 4.3.1 dynamic information
-- 4.3.3 editing atoms, siblings, parent-child structures
+- 4.3.1 support for accessing dynamic information
+- 4.3.3 support for inserting, replacing, and deleting program structures
 
-TODO
+1. Follow step 1 of Getting Started. The website includes the "Watch" case study, which makes use of dynamic information, and three editing scenarios.
+2. Watch: try changing the expression to observe the change in the user interface to reflect the changed expression's result.
+3. Editing Scenarios: inspect the three editing scenarios, shown here as code snippets that use the API that we provide to users of the framework. The scenarios are editable and are re-evaluated on change.
 
 ## Claim: Section 5 --- Platform Support
 - Codemirror
@@ -57,3 +59,4 @@ TODOs
 * replacing w/ parens
 * insert algo: Should there be multiple repeating structures in the same definition, which tends to be rare, the user can specify a function that selects the desired one given all options, for example, based on the type of node that is repeated.
 * whitespace detect: To mitigate this issue, we employ a default heuristic to always pull in whitespace to the right of a fragment's expression but only pull in whitespace to the left of a fragment's expression if it is not indentation and if it is more than one space character.
+* mehrere klassen, bessere namen im browser

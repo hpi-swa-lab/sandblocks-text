@@ -282,8 +282,50 @@ export class TreeSitterLanguage extends SBLanguage {
     }
   }
 
-  needsParenthesesInPosition(str, node) {
-    return false;
+  supportsParentheses(str, node) {
+    if (!node.parent) return false;
+
+    const grammarNode = this._grammarNodeFor(node);
+    if (!grammarNode) return false;
+    if (grammarNode.type !== "SYMBOL") return false;
+
+    const bodyRule = this.grammar.rules[grammarNode.name];
+    if (!bodyRule) return false;
+
+    const hasParentheses = (rule) => {
+      if (!rule) return false;
+
+      switch (rule.type) {
+        case "SEQ": {
+          const members = rule.members;
+          if (members.length >= 2) {
+            const first = members[0];
+            const last = members[members.length - 1];
+            if (first.type === "STRING" && first.value === "(" &&
+                last.type === "STRING" && last.value === ")") {
+              return true;
+            }
+          }
+          return false;
+        }
+        case "SYMBOL": {
+          const symbolRule = this.grammar.rules[rule.name];
+          return symbolRule ? hasParentheses(symbolRule) : false;
+        }
+        case "CHOICE":
+          return rule.members.some(hasParentheses);
+        case "PREC_DYNAMIC":
+        case "PREC_LEFT":
+        case "PREC_RIGHT":
+        case "PREC":
+        case "FIELD":
+          return hasParentheses(rule.content);
+        default:
+          return false;
+      }
+    };
+
+    return hasParentheses(bodyRule);
   }
 
   // node API

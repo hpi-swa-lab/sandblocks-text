@@ -820,8 +820,19 @@ export class SBNode {
   // edit operations
   replaceWith(str, editOptions) {
     if (typeof str === "number") str = str.toString();
-    if (this.language.needsParenthesesInPosition(str, this)) str = `(${str})`;
-    this.editor.replaceTextFromCommand(this.range, str, editOptions);
+    if (this.language.supportsParentheses(str, this)) {
+      const editor = this.editor;
+      const start = this.range[0]
+      editor.replaceTextFromCommand(this.range, str, editOptions);
+      const insertRange = [start, start + str.length];
+      const insertedNode = editor.root.childForRange(insertRange);
+      if (!insertedNode) {
+        str = `(${str})`;
+        editor.replaceTextFromCommand(insertRange, str, editOptions);
+      }
+    } else {
+      editor.replaceTextFromCommand(this.range, str, editOptions);
+    }
   }
 
   /**
