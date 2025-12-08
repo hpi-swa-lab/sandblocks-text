@@ -311,12 +311,13 @@ PText >> printTreeOn: aStream indent: aNumber [
 	aStream nextPutAll: '"'
 ]
 
-{ #category : #'as yet unclassified' }
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:30'
+}
 PText >> queryState [
 
-	^ self rootBlock
-		valueOfProperty: #queryState
-		ifAbsentPut: [DCQueryState new rootBlock: self]
+	^ nil
 ]
 
 {
@@ -373,12 +374,6 @@ PText >> siblingIndex [
 		c = self ifTrue: [^ i].
 		i := i + 1].
 	^ 0
-]
-
-{ #category : #'as yet unclassified' }
-PText >> slot [
-
-	^ DCMockSlot new for: self
 ]
 
 { #category : #'as yet unclassified' }

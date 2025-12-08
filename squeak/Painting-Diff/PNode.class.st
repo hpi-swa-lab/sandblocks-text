@@ -50,22 +50,6 @@ PNode class >> addUncapturedTextTo: aNode in: aCursor language: aLanguage isLeaf
 			range: aCursor range)]
 ]
 
-{ #category : #'text modify' }
-PNode class >> deleteFrom: aString at: aNumber do: aBlock [
-
-	| new deleted |
-	deleted := aString copyFrom: aNumber to: aNumber.
-	new := (aString first: aNumber - 1), (aString allButFirst: aNumber).
-	^ aBlock
-		value: new
-		value: (SBTSInputEdit new
-			startByte: aNumber - 1;
-			oldEndByte: aNumber;
-			newEndByte: aNumber - 1;
-			bytesToPointsIn: aString new: new)
-		value: [:source :block | self insert: deleted in: source at: aNumber do: block]
-]
-
 { #category : #'parsing - tree-sitter' }
 PNode class >> findChangeRangeFrom: original to: new [
 
@@ -112,23 +96,6 @@ PNode class >> fromCursor: aCursor language: aLanguage [
 				contents: aCursor text;
 				field: aCursor fieldName;
 				range: aCursor range]
-]
-
-{ #category : #'text modify' }
-PNode class >> insert: aString in: aContainerString at: aNumber do: aBlock [
-
-	| new |
-	new := (aNumber > aContainerString size or: [aContainerString isEmpty])
-		ifTrue: [aContainerString, aString]
-		ifFalse: [(aContainerString first: aNumber - 1), aString, (aContainerString allButFirst: aNumber - 1)].
-	aBlock
-		value: new
-		value: (SBTSInputEdit new
-			startByte: aNumber - 1;
-			oldEndByte: aNumber - 1;
-			newEndByte: aNumber - 1 + aString size;
-			bytesToPointsIn: aContainerString new: new)
-		value: [:source :block | self deleteFrom: source at: aNumber do: block]
 ]
 
 { #category : #'parsing - tree-sitter' }
@@ -198,73 +165,6 @@ PNode class >> parseSt: aString [
 	^ node accept: (PSmalltalkParser new
 		encoder: parser encoder;
 		source: aString)
-]
-
-{
-	#category : #'text modify',
-	#'squeak_changestamp' : 'tobe 4/13/2024 11:43'
-}
-PNode class >> replace: aRange in: aContainerString with: aString do: aBlock [
-
-	| new original newLength |
-	self
-		example: [PNode]
-		args: [{SBTSRange start: 3 size: 3. 'abcxxxghi'. 'def'. [:a :b | ]}]
-		label: 'example'.
-	
-	original := aContainerString copyFrom: aRange start index + 1 to: aRange end index.
-	newLength := aString size.
-	new := (aContainerString first: aRange start index), aString, (aContainerString allButFirst: aRange end index).
-	^ aBlock
-		value: new
-		value: (SBTSInputEdit new
-			startByte: aRange start index;
-			oldEndByte: aRange end index;
-			newEndByte: aRange start index + aString size;
-			bytesToPointsIn: aString new: new)
-		value: [:source :block | self replace: (aRange withSize: newLength) in: source with: original do: block]
-]
-
-{
-	#category : #'text modify',
-	#'squeak_changestamp' : 'tobe 4/13/2024 11:43'
-}
-PNode class >> swap: aRange with: anotherRange in: aString do: aBlock [
-
-	| first second new |
-	self
-		example: [PNode new]
-		args: [
-			{
-				SBTSRange
-					start: (SBTSPosition line: 0 character: 8 index: 8)
-					end: (SBTSPosition line: 0 character: 9 index: 9).
-				SBTSRange
-					start: (SBTSPosition line: 0 character: 2 index: 2)
-					end: (SBTSPosition line: 0 character: 5 index: 5).
-				'1234567890'}]
-		label: 'example'.
-	first := aRange start index < anotherRange start index
-		ifTrue: [aRange]
-		ifFalse: [anotherRange].
-	second := aRange start index < anotherRange start index
-		ifTrue: [anotherRange]
-		ifFalse: [aRange].
-	new := (aString first: first start index), (aString copyFrom: second start index + 1 to: second end index), (aString copyFrom: first end index + 1 to: second start index), (aString copyFrom: first start index + 1 to: first end index), (aString allButFirst: second end index).
-	
-	^ aBlock
-		value: new
-		value: (SBTSInputEdit new
-			startByte: first start index;
-			oldEndByte: second end index;
-			newEndByte: second end index;
-			bytesToPointsIn: aString new: new)
-		value: [:source :block |
-			self
-				swap: (first withSize: second size)
-				with: (second withSize: first size) + (second size - first size)
-				in: source
-				do: block]
 ]
 
 {
@@ -1196,12 +1096,13 @@ PNode >> queryFirst: aString [
 	^ nil
 ]
 
-{ #category : #accessing }
+{
+	#category : #accessing,
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:30'
+}
 PNode >> queryState [
 
-	^ self rootBlock
-		valueOfProperty: #queryState
-		ifAbsentPut: [DCQueryState new rootBlock: self]
+	^ nil
 ]
 
 { #category : #'as yet unclassified' }
