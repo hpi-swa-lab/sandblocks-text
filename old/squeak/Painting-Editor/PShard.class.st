@@ -191,7 +191,7 @@ PShard >> findDiff: aString b: anotherString preferredPos: myPreferredPos prefer
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/17/2024 09:52'
+	#'squeak_changestamp' : 'tobe 12/8/2025 17:40'
 }
 PShard >> initialize [
 
@@ -211,6 +211,7 @@ PShard >> initialize [
 			vResizing: #shrinkWrap;
 			yourself);
 		changeTableLayout;
+		color: Color transparent;
 		hResizing: #shrinkWrap;
 		vResizing: #shrinkWrap
 ]
