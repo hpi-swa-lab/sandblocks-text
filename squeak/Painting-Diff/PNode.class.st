@@ -583,13 +583,6 @@ PNode >> firstChildrenInRange: aRange do: aBlock [
 ]
 
 { #category : #'as yet unclassified' }
-PNode >> firstSourceCharacter [
-
-	self writeSourceOn: (SBImmediateStream with: [:c | ^ c]) indent: 0 forCompare: false.
-	^ nil
-]
-
-{ #category : #'as yet unclassified' }
 PNode >> fixedNumberOfChildren [
 
 	^ false
@@ -599,15 +592,6 @@ PNode >> fixedNumberOfChildren [
 PNode >> generatedSourceString [
 
 	^ String streamContents: [:s | self writeSourceOn: s indent: 0 forCompare: false]
-]
-
-{ #category : #'as yet unclassified' }
-PNode >> getSourceStringAndMark [
-
-	| stream |
-	stream := SBLineInfoStream on: ''.
-	self writeSourceOn: stream indent: 0 forCompare: false.
-	^ stream contents
 ]
 
 { #category : #grammar }
@@ -1105,7 +1089,7 @@ PNode >> privateTSTreeOrNilDo: aBlock [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 12/8/2025 20:15'
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:42'
 }
 PNode >> queryAll: aString [
 
@@ -1116,19 +1100,22 @@ PNode >> queryAll: aString [
 	^ Array streamContents: [:stream |
 		self allChildrenDo: [:block |
 			block isTSMorph ifTrue: [
-				(SBTSQuery new
+				(PQuery new
 					prepare: aString;
 					executeCaptureAgainst: block) do: [:assoc | stream nextPut: assoc value]]]]
 ]
 
-{ #category : #'as yet unclassified' }
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:42'
+}
 PNode >> queryChildrenFirst: aString [
 
 	self assert: (aString includes: $@) description: 'query needs a capture (@) to be useful'.
 	
 	self children do: [:block |
 		block isTSMorph ifTrue: [
-			(SBTSQuery new
+			(PQuery new
 				prepare: aString;
 				executeCaptureAgainst: block) do: [:assoc | ^ assoc value]]].
 	^ nil
@@ -1136,7 +1123,7 @@ PNode >> queryChildrenFirst: aString [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 12/8/2025 20:15'
+	#'squeak_changestamp' : 'tobe 12/8/2025 20:42'
 }
 PNode >> queryFirst: aString [
 
@@ -1146,7 +1133,7 @@ PNode >> queryFirst: aString [
 	
 	self allBaseChildrenDo: [:block |
 		block isTSMorph ifTrue: [
-			(SBTSQuery new
+			(PQuery new
 				prepare: aString;
 				executeCaptureAgainst: block) do: [:assoc | ^ assoc value]]].
 	^ nil
