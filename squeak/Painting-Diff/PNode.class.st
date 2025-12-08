@@ -1233,11 +1233,11 @@ PNode >> shallowCopyBlock [
 
 {
 	#category : #diffing,
-	#'squeak_changestamp' : 'tobe 12/8/2025 20:37'
+	#'squeak_changestamp' : 'tobe 12/8/2025 21:32'
 }
 PNode >> share [
 
-	^ self valueOfProperty: #share
+	^ share
 ]
 
 {
