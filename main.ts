@@ -83,12 +83,11 @@ let color = ["color", baseline + 140, 3, ["slider", 0, 255, 1, 25][4]];`);
     }),
 
     h("h2", {}, "Browser"),
-    h("p", {}, "TODO: press add button, indent marker missing at start"),
     h(Browser, {
       files: [
         {
           name: "index.html",
-          content: `class MyCls {
+          content: `class MyClass {
   numberField
 
   constructor() {
@@ -97,6 +96,16 @@ let color = ["color", baseline + 140, 3, ["slider", 0, 255, 1, 25][4]];`);
 
   someMethod() {
     console.log("someMethod called");
+  }
+
+  otherMethod() {
+    console.log("otherMethod called");
+  }
+}
+
+class OtherClass {
+  constructor() {
+    this.numberField = 10;
   }
 
   otherMethod() {

@@ -56,8 +56,3 @@ To reproduce:
 1. Follow step 1 of Getting Started. The website includes the four case studies described in Section 6.
 TODO specific steps to use?
 
-
-TODOs
-* insert algo: Should there be multiple repeating structures in the same definition, which tends to be rare, the user can specify a function that selects the desired one given all options, for example, based on the type of node that is repeated.
-* not loading indent markers and live results on first load
-* mehrere klassen, bessere namen im browser

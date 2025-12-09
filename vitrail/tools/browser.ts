@@ -5,6 +5,7 @@ import { List } from "./list.js";
 import { appendCss, clamp, last, takeWhile } from "../../utils.js";
 import { outline } from "./outline.ts";
 import { removeCommonIndent } from "./whitespace.ts";
+import { placeholder } from "./placeholder.ts";
 import {
   SelectionInteraction,
   useValidateKeepNodes,
@@ -23,6 +24,8 @@ import {
 } from "../../external/codemirror6/codemirror.bundle.js";
 import { SBLanguage, SBNode } from "../../core/model.js";
 import { languageFor } from "../../core/languages.js";
+
+const pl = placeholder(languageFor("javascript"));
 
 appendCss(`
 .browser-editor {
@@ -100,7 +103,7 @@ export function Browser({ files, initialSelection }) {
 
   return h(
     "div",
-    { style: { display: "flex", flexDirection: "column", flex: "1 1 0" } },
+    { style: { display: "inline-flex", width: '600px', flexDirection: "column", flex: "1 1 0", boxShadow: '0 3px 8px rgba(0, 0, 0, 0.3)', border: '1px solid rgba(0, 0, 0, 0.3)', borderRadius: '0.25rem' } },
     h(
       "div",
       { style: { display: "flex" } },
@@ -148,6 +151,7 @@ export function Browser({ files, initialSelection }) {
                 "statement",
                 0,
               );
+              selectedMember.value = null;
               selectedTopLevel.value = getOutline().find(({ nodes }) =>
                 nodes.includes(node),
               ).nodes;
@@ -179,22 +183,23 @@ export function Browser({ files, initialSelection }) {
             member: selectedMemberItem?.name,
           },
         }),
-        h(
-          "button",
-          {
-            onClick: () => {
-              const node = getRoot().insert(
-                "__VI_PLACEHOLDER_statement;",
-                "statement",
-                0,
-              );
-              selectedTopLevel.value = getOutline().find(({ nodes }) =>
-                nodes.includes(node),
-              ).nodes;
-            },
-          },
-          "Add",
-        ),
+        // h(
+        //   "button",
+        //   {
+        //     onClick: () => {
+        //       if (!selectedTopLevel.value?.[0]) return;
+        //       const node = selectedTopLevel.value[0].insert(
+        //         "__VI_PLACEHOLDER_member;",
+        //         "field_definition",
+        //         0,
+        //       );
+        //       selectedTopLevel.value = getOutline().find(({ nodes }) =>
+        //         nodes.includes(node),
+        //       ).nodes;
+        //     },
+        //   },
+        //   "Add",
+        // ),
       ),
       h("div", {
         style: { height: "1.5rem" },
@@ -218,7 +223,7 @@ export function Browser({ files, initialSelection }) {
         },
         onChange: () => (topLevelEntries.value = getOutline()),
         cmExtensions: [javascript(), baseCMExtensions],
-        fetchAugmentations: () => [removeIndentAug, singleDeclarationAug],
+        fetchAugmentations: () => [removeIndentAug, singleDeclarationAug, pl],
         props: { nodes: selectedNodes },
         style: { width: "100%" },
       }),

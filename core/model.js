@@ -822,10 +822,11 @@ export class SBNode {
     if (typeof str === "number") str = str.toString();
     if (this.language.supportsParentheses(str, this)) {
       const editor = this.editor;
+      const root = this.root;
       const start = this.range[0]
       editor.replaceTextFromCommand(this.range, str, editOptions);
       const insertRange = [start, start + str.length];
-      const insertedNode = editor.root.childForRange(insertRange);
+      const insertedNode = root.childForRange(insertRange);
       if (!insertedNode) {
         str = `(${str})`;
         editor.replaceTextFromCommand(insertRange, str, editOptions);
