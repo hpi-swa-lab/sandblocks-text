@@ -8,3 +8,4 @@ vitrail/planner.js
 build
 dist/
 .options/
+dist-demo/
