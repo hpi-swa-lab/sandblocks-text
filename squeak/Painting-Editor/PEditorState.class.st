@@ -15,7 +15,7 @@ Class {
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'ct 12/9/2025 02:00'
+	#'squeak_changestamp' : 'tobe 12/9/2025 07:52'
 }
 PEditorState class >> example [
 
@@ -25,41 +25,40 @@ PEditorState class >> example [
 		model: PSmalltalkParser;
 		query: {[:x | x type = #message and: [x baseChildren second contents = '{sbWatchWithId:}']]};
 		init: [:node :replacement |
-			replacement color: Color veryDarkGray.
-			replacement layoutInset: 1 px.
-			replacement
-				addMorphBack: replacement createShard;
-				addMorphBack: (TextMorph new color: Color white; lock; hResizing: #shrinkWrap)]
+				replacement color: (Color r: 0.25 g: 0.25 b: 0.25).
+				replacement layoutInset: 1 px.
+				replacement
+					addMorphBack: (replacement createShard extensions: {testExt});
+					addMorphBack: (TextMorph new
+						color: (Color r: 1 g: 1 b: 1);
+						lock;
+						hResizing: #shrinkWrap)]
 			update: [:node :replacement | | watchId updateWatch |
 				replacement firstSubmorph nodes: {node baseChildren first}.
 				watchId := node baseChildren third contents asInteger.
 				updateWatch := [
-					replacement submorphs second contents:
-						(PTracer current ifNil: ['(not watching)'] ifNotNil: [:tracer |
-							tracer
-								valueForId: watchId
-								ifPresent: [:value | value asArray printString]
-								ifAbsent: ['(not yet watched)']])].
+					replacement submorphs second contents: (PTracer current ifNil: ['(not watching)'] ifNotNil: [:tracer |
+						tracer
+							valueForId: watchId
+							ifPresent: [:value | value asArray printString]
+							ifAbsent: ['(not yet watched)']])].
 				updateWatch value.
 				PTracer current ifNotNil: [:tracer |
 					tracer when: #traced send: #value to: updateWatch.
 					(replacement valueOfProperty: #watchTracerReceivers ifAbsentPut: [Dictionary new])
-						at: watchId put: updateWatch]]
+						at: watchId
+						put: updateWatch]]
 			delete: [:node :replacement | | watchId |
 				watchId := node baseChildren third contents asInteger.
-				(replacement valueOfProperty: #watchTracerReceivers)
-					removeKey: watchId]).
+				(replacement valueOfProperty: #watchTracerReceivers) removeKey: watchId]).
 	
 	e := PEditorState new.
 	e rootShard extensions: [{testExt}].
 	e sourceString: 'test
 
-	3 + ((2 +
-	8) sbWatchWithId: 1).
-	1 to: 3 do: [:i | ((((5
-	+ i) sbWatchWithId: 2)
-	) sbWatchWithId: 3)
-	+ 1]'.
+	3 + ((2 + 8) sbWatchWithId: 1).
+	1 to: 3 do: [:i | ((5
+	+ i) sbWatchWithId: 2)]'.
 	
 	container := Morph new
 		addMorphBack: e rootShard;
