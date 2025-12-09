@@ -124,6 +124,65 @@ PShard >> extensions: aBlock [
 ]
 
 {
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'ct 12/9/2025 01:57'
+}
+PShard >> filterEvent: anEvent for: aMorph [
+
+	anEvent isKeystroke ifFalse: [^ anEvent].
+	aMorph hasKeyboardFocus ifFalse: [^ anEvent].
+	
+	anEvent wasHandled ifTrue: [ "bubbling"
+		| containingReplacement containingTextMorph |
+		self replacements do: [:ea | | childTextMorph |
+			childTextMorph := ea firstSubmorph view.
+			(aMorph selectionInterval isEmpty and: [childTextMorph selectionInterval notEmpty]) ifTrue: [
+				childTextMorph selectFrom: childTextMorph selectionInterval start to: childTextMorph selectionInterval start - 1]].
+		((containingReplacement := self owner) isKindOf: PReplacementPluggable) ifFalse: [^ anEvent].
+		containingTextMorph := containingReplacement owner.
+		(aMorph selectionInterval isEmpty and: [containingTextMorph selectionInterval notEmpty]) ifTrue: [
+			containingTextMorph selectFrom: aMorph selectionInterval start to: aMorph selectionInterval start - 1].
+		^ anEvent].
+	
+	"capturing"
+	(anEvent keyCharacter = Character arrowLeft and: [aMorph selectionInterval start <= 2]) ifTrue: [ | containingReplacement containingTextMorph containingShard index |
+		((containingReplacement := self owner) isKindOf: PReplacementPluggable) ifFalse: [^ anEvent].
+		containingTextMorph := containingReplacement owner.
+		containingShard := containingTextMorph owner owner owner.
+		anEvent hand newKeyboardFocus: containingTextMorph.
+		index := (containingShard adjustGlobalIndex: containingReplacement range first) - (1 - aMorph selectionInterval start).
+		containingTextMorph selectFrom: index + aMorph selectionInterval notEmpty asBit to: index - 1.
+		^ anEvent wasHandled: true].
+	(anEvent keyCharacter = Character arrowRight and: [aMorph selectionInterval stop >= (aMorph text size - 1)]) ifTrue: [ | containingReplacement containingTextMorph index |
+		((containingReplacement := self owner) isKindOf: PReplacementPluggable) ifFalse: [^ anEvent].
+		containingTextMorph := containingReplacement owner.
+		anEvent hand newKeyboardFocus: containingTextMorph.
+		index := containingReplacement range first + 2.
+		containingTextMorph selectFrom: index - aMorph selectionInterval notEmpty asBit to: index - 1.
+		^ anEvent wasHandled: true].
+	anEvent keyCharacter = Character arrowLeft ifTrue: [
+		1 to: 0 by: -1 do: [:i |
+			(aMorph text attributesAt: aMorph selectionInterval start - 1 - i)
+				detect: [:ea | ea anchoredMorph isKindOf: PReplacementPluggable]
+				ifFound: [:ea | | childShard |
+					childShard := ea anchoredMorph firstSubmorph.
+					anEvent hand newKeyboardFocus: childShard view.
+					childShard view selectFrom: childShard view text size - (1 - i) + 1 to: childShard view text size - (1 - i).
+					^ anEvent wasHandled: true]]].
+	anEvent keyCharacter = Character arrowRight ifTrue: [
+		1 to: 0 by: -1 do: [:i |
+			(aMorph text attributesAt: aMorph selectionInterval stop + 1 + i)
+				detect: [:ea | ea anchoredMorph isKindOf: PReplacementPluggable]
+				ifFound: [:ea | | childShard |
+					childShard := ea anchoredMorph firstSubmorph.
+					anEvent hand newKeyboardFocus: childShard view.
+					childShard view selectFrom: (1 - i) + 1 to: 1 - i.
+					^ anEvent wasHandled: true]]].
+	
+	^ anEvent
+]
+
+{
 	#category : #utils,
 	#'squeak_changestamp' : 'tobe 12/8/2025 21:52'
 }
@@ -193,7 +252,7 @@ PShard >> findDiff: aString b: anotherString preferredPos: myPreferredPos prefer
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 12/8/2025 17:40'
+	#'squeak_changestamp' : 'ct 12/9/2025 00:47'
 }
 PShard >> initialize [
 
@@ -203,15 +262,18 @@ PShard >> initialize [
 	attributes := OrderedCollection new.
 	extensions := [{}].
 	
+	view := PluggableTextMorphPlus new
+		setSelection: (0 to: 0);
+		model: self;
+		editTextSelector: #onChange:;
+		setText: '';
+		hResizing: #shrinkWrap;
+		vResizing: #shrinkWrap;
+		yourself.
+	view addKeyboardCaptureFilter: self. 
+	view addKeyboardBubbleFilter: self.
 	self
-		addMorph: (view := PluggableTextMorphPlus new
-			setSelection: (0 to: 0);
-			model: self;
-			editTextSelector: #onChange:;
-			setText: '';
-			hResizing: #shrinkWrap;
-			vResizing: #shrinkWrap;
-			yourself);
+		addMorph: view;
 		changeTableLayout;
 		color: Color transparent;
 		hResizing: #shrinkWrap;
