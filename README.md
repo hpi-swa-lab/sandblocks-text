@@ -3,6 +3,9 @@
 1. Run `docker image load < hybridse.tar`, then `docker run -p 8080:9005 lively4-artifact`
 2. Open [http://localhost:8080/lively4-core/start.html?load=http://localhost:8080/sandblocks-text-artifact/lively-demo.md]() in a browser, which should open a file browser-like interface on the left with an editor on the right (tested on Chrome 142.0.7444.175).
 
+[http://localhost:8080/sandblocks-text-artifact/squeak-demo/squeak.html]()
+[http://localhost:8080/sandblocks-text-artifact/dist-demo/index.html]()
+
 # Overview of Claims
 
 Since the steps to reproduce our claims are short, we merged the step-by-step instructions with the list of claims for a better overview.

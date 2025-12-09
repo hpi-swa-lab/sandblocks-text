@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import path from 'path';
+import { cpSync } from 'fs';
 
 // Plugin to resolve .ts extensions in imports
 function resolveTsExtensions() {
@@ -17,9 +18,19 @@ function resolveTsExtensions() {
   };
 }
 
+// Plugin to copy external folder to dist-demo/external
+function copyExternal() {
+  return {
+    name: 'copy-external',
+    closeBundle() {
+      cpSync('external', 'dist-demo/external', { recursive: true });
+    },
+  };
+}
+
 export default defineConfig({
   base: './',
-  plugins: [resolveTsExtensions()],
+  plugins: [resolveTsExtensions(), copyExternal()],
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs'],
   },
