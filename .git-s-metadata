@@ -1,6 +1,6 @@
 GSMetadata {
 	#version : 1,
-	#mappers : [
+	#mappers : OrderedCollection [
 		GSTonelMapper {
 			#version : 1,
 			#package : MCPackage {
@@ -28,6 +28,13 @@ GSMetadata {
 				'sandblocks',
 				'oRAGle'
 			]
+		},
+		GSTonelMapper {
+			#version : 1,
+			#package : MCPackage {
+				#name : 'Painting-Watch'
+			},
+			#path : FSAbsolutePath [ ]
 		}
 	],
 	#name : 'sb-text'

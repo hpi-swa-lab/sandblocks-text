@@ -15,7 +15,7 @@ Class {
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 12/8/2025 22:09'
+	#'squeak_changestamp' : 'ct 12/9/2025 02:00'
 }
 PEditorState class >> example [
 
@@ -23,15 +23,43 @@ PEditorState class >> example [
 	testExt := PExtension new registerReplacement: (PReplacementDefinition new
 		name: 'test';
 		model: PSmalltalkParser;
-		query: {[:x | x type = #message and: [x baseChildren second contents = '{sbWatch}']]};
-		init: [:node :replacement | replacement addMorphBack: replacement createShard]
-			update: [:node :replacement | replacement firstSubmorph nodes: {node baseChildren first}]).
+		query: {[:x | x type = #message and: [x baseChildren second contents = '{sbWatchWithId:}']]};
+		init: [:node :replacement |
+			replacement color: Color veryDarkGray.
+			replacement layoutInset: 1 px.
+			replacement
+				addMorphBack: replacement createShard;
+				addMorphBack: (TextMorph new color: Color white; lock; hResizing: #shrinkWrap)]
+			update: [:node :replacement | | watchId updateWatch |
+				replacement firstSubmorph nodes: {node baseChildren first}.
+				watchId := node baseChildren third contents asInteger.
+				updateWatch := [
+					replacement submorphs second contents:
+						(PTracer current ifNil: ['(not watching)'] ifNotNil: [:tracer |
+							tracer
+								valueForId: watchId
+								ifPresent: [:value | value asArray printString]
+								ifAbsent: ['(not yet watched)']])].
+				updateWatch value.
+				PTracer current ifNotNil: [:tracer |
+					tracer when: #traced send: #value to: updateWatch.
+					(replacement valueOfProperty: #watchTracerReceivers ifAbsentPut: [Dictionary new])
+						at: watchId put: updateWatch]]
+			delete: [:node :replacement | | watchId |
+				watchId := node baseChildren third contents asInteger.
+				(replacement valueOfProperty: #watchTracerReceivers)
+					removeKey: watchId]).
 	
 	e := PEditorState new.
 	e rootShard extensions: [{testExt}].
 	e sourceString: 'test
 
-	3 + (4 + 5) sbWatch'.
+	3 + ((2 +
+	8) sbWatchWithId: 1).
+	1 to: 3 do: [:i | ((((5
+	+ i) sbWatchWithId: 2)
+	) sbWatchWithId: 3)
+	+ 1]'.
 	
 	container := Morph new
 		addMorphBack: e rootShard;
@@ -92,7 +120,7 @@ PEditorState >> applyChanges: aCollection [
 
 {
 	#category : #changes,
-	#'squeak_changestamp' : 'tobe 4/19/2024 21:10'
+	#'squeak_changestamp' : 'ct 12/9/2025 01:19'
 }
 PEditorState >> applyChanges: aCollection force: aBoolean [
 
@@ -132,6 +160,8 @@ PEditorState >> applyChanges: aCollection force: aBoolean [
 		editScripts keysAndValuesDo: [:model :editScript | shard updateReplacementsFor: editScript root: (models at: model)].
 		shard updateText].
 	
+	self evaluateCode.
+	
 	^ true
 ]
 
@@ -160,6 +190,22 @@ PEditorState >> basicSourceString: aString [
 PEditorState >> ensureModels: aCollection [
 
 	aCollection do: [:model | models at: model ifAbsentPut: [sourceString ifNotNil: [model parse: sourceString old: nil]]]
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'ct 12/9/2025 01:41'
+}
+PEditorState >> evaluateCode [
+
+	| method |
+	PTracer current ifNotNil: #reset.
+	method := ([Compiler new compile: self sourceString in: nil class environment: self environment notifying: nil ifFail: [^ self]]
+		on: SyntaxErrorNotification do: [^ self])
+			generate.
+	method numArgs = 0 ifFalse: [^ self].
+	
+	method valueWithReceiver: nil arguments: #().
 ]
 
 {

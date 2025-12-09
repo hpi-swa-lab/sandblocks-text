@@ -60,6 +60,15 @@ PReplacementDefinition >> init: aBlock update: anotherBlock [
 
 {
 	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'ct 12/9/2025 01:45'
+}
+PReplacementDefinition >> init: aBlock update: anotherBlock delete: aThirdBlock [
+
+	self buildReplacement: [PReplacementPluggable new init: aBlock update: anotherBlock delete: aThirdBlock]
+]
+
+{
+	#category : #'as yet unclassified',
 	#'squeak_changestamp' : 'tobe 4/15/2024 11:09'
 }
 PReplacementDefinition >> initialize [
