@@ -1,15 +1,6 @@
 GSMetadata {
 	#version : 1,
-	#mappers : OrderedCollection [
-		GSTonelMapper {
-			#version : 1,
-			#package : MCPackage {
-				#name : 'Painting-Diff'
-			},
-			#path : FSAbsolutePath [
-				'squeak'
-			]
-		},
+	#mappers : [
 		GSTonelMapper {
 			#version : 1,
 			#package : MCPackage {
@@ -22,19 +13,20 @@ GSMetadata {
 		GSTonelMapper {
 			#version : 1,
 			#package : MCPackage {
-				#name : 'oRAGle'
+				#name : 'Painting-Watch'
 			},
 			#path : FSAbsolutePath [
-				'sandblocks',
-				'oRAGle'
+				'squeak'
 			]
 		},
 		GSTonelMapper {
 			#version : 1,
 			#package : MCPackage {
-				#name : 'Painting-Watch'
+				#name : 'Painting-Diff'
 			},
-			#path : FSAbsolutePath [ ]
+			#path : FSAbsolutePath [
+				'squeak'
+			]
 		}
 	],
 	#name : 'sb-text'
