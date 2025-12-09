@@ -6,9 +6,9 @@ WORKDIR /root
 
 RUN mkdir lively4
 
-RUN git clone -b gh-pages https://github.com/LivelyKernel/lively4-core.git /root/lively4/lively4-core
+RUN git clone --depth=1 -b gh-pages https://github.com/LivelyKernel/lively4-core.git /root/lively4/lively4-core
 # sandblocks-text-artifact (artifact branch)
-RUN git clone -b artifact https://github.com/hpi-swa-lab/sandblocks-text.git /root/lively4/sandblocks-text-artifact
+RUN git clone --depth=1 -b artifact https://github.com/hpi-swa-lab/sandblocks-text.git /root/lively4/sandblocks-text-artifact
 
 # Build sandblocks-text-artifact
 WORKDIR /root/lively4/sandblocks-text-artifact
