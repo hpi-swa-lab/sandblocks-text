@@ -120,7 +120,7 @@ PEditorState >> applyChanges: aCollection [
 
 {
 	#category : #changes,
-	#'squeak_changestamp' : 'ct 12/9/2025 01:19'
+	#'squeak_changestamp' : 'ct 12/9/2025 02:15'
 }
 PEditorState >> applyChanges: aCollection force: aBoolean [
 
@@ -132,7 +132,8 @@ PEditorState >> applyChanges: aCollection force: aBoolean [
 	oldModels := models copy.
 	
 	editScripts := oldModels collect: [:oldRoot | | newRoot |
-		newRoot := oldRoot language parse: newSourceString old: oldRoot.
+		newRoot := [oldRoot language parse: newSourceString old: oldRoot]
+			on: SyntaxErrorNotification do: [^ false].
 		
 		pair := PTrueDiff new compare: oldRoot to: newRoot.
 		pair first privateSource: newSourceString.
