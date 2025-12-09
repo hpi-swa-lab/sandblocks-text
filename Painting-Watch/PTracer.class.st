@@ -52,6 +52,15 @@ PTracer class >> disableTracingDuring: aBlock [
 ]
 
 {
+	#category : #'class initialization',
+	#'squeak_changestamp' : 'ct 12/9/2025 02:18'
+}
+PTracer class >> initialize [
+
+	self current: self new.
+]
+
+{
 	#category : #'as yet unclassified',
 	#'squeak_changestamp' : 'ct 12/9/2025 01:25'
 }
