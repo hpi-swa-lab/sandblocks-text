@@ -261,7 +261,7 @@ PSmalltalkParser >> visitLiteralVariableNode: aLiteralVariableNode [
 
 {
 	#category : #visiting,
-	#'squeak_changestamp' : 'tobe 12/8/2025 22:09'
+	#'squeak_changestamp' : 'ct 12/9/2025 02:04'
 }
 PSmalltalkParser >> visitMessageNode: aMessageNode [
 
@@ -270,7 +270,7 @@ PSmalltalkParser >> visitMessageNode: aMessageNode [
 	
 	aMessageNode receiver ifNotNil: [:receiver | node baseAndMorphAdd: (receiver accept: self)].
 	aMessageNode selector ifNotNil: [:selector | node baseAndMorphAdd: (self createPText: selector asString node: selector)].
-	aMessageNode arguments do: [:argument | node baseAndMorphAdd: (argument accept: self)].
+	(aMessageNode arguments copyWithout: nil "??") do: [:argument | node baseAndMorphAdd: (argument accept: self)].
 	
 	^ node
 ]
@@ -394,4 +394,13 @@ PSmalltalkParser >> visitVariableNode: aVariableNode [
 	text := self createPText: aVariableNode name asString node: aVariableNode.
 	self addChild: text.
 	^ text
+]
+
+{
+	#category : #visiting,
+	#'squeak_changestamp' : 'ct 12/9/2025 02:04'
+}
+PSmalltalkParser >> visitVariableUsageNode: aVariableUsageNode [
+
+	^ self visitVariableNode: aVariableUsageNode variableNode
 ]
