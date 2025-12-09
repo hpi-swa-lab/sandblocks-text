@@ -194,18 +194,21 @@ PEditorState >> ensureModels: aCollection [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'ct 12/9/2025 01:41'
+	#'squeak_changestamp' : 'ct 12/9/2025 02:15'
 }
 PEditorState >> evaluateCode [
 
 	| method |
 	PTracer current ifNotNil: #reset.
-	method := ([Compiler new compile: self sourceString in: nil class environment: self environment notifying: nil ifFail: [^ self]]
-		on: SyntaxErrorNotification do: [^ self])
+	method := ([Compiler new compile: self sourceString in: nil class environment: self environment notifying: nil ifFail: [^ false]]
+		on: SyntaxErrorNotification do: [^ false])
 			generate.
-	method numArgs = 0 ifFalse: [^ self].
+	method numArgs = 0 ifFalse: [^ false].
 	
-	method valueWithReceiver: nil arguments: #().
+	[method valueWithReceiver: nil arguments: #()]
+		on: Error , Warning , Halt do: [^ false].
+	
+	^ true
 ]
 
 {
