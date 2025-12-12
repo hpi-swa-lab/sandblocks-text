@@ -2,7 +2,9 @@
 
 <script>
   // hack for better loading...
-  await lively.sleep(1000)
+  await (<lively-code-mirror></lively-code-mirror>) // force code mirror loading...
+
+
 //   var buttons = <div>
 //     <button click={async () => {
 //         const editor = await lively.openWorkspace("");
@@ -40,8 +42,9 @@
 
   import {addVitrailToLivelyEditor} from './vitrail/lively.js';
 
-  "loaded sandblocks"
+  ""
 </script>
+
 
 <script>
 var pane = <div style="border:1px solid "></div>
