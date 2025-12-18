@@ -1,18 +1,25 @@
-# Hello CodeMirror!
+# Sandblocks-Text in Lively4
+
+This wiki page can be used to play around with custom replacements. Press the ![](edit-file-icon.png){height=30px} to adapt or create your own editor replacements. This is a playground and is independent of the optional Sandblocks integration into the default Lively4 CodeMirror5 editor, which can be opened via the right-click context menu and then select "Workspace (sandblocks)". 
+
+```javascript
+<lively-code-mirror sandblocks="true"> ...
+```
+<script>
+<button click={async () => {
+  const editor = await lively.openWorkspace("var color = 'rgba(100,10,10,0.5)'");
+  editor.setAttribute("sandblocks", true)              
+}}>Workspace (sandblocks)</button>
+</script>
+
+The editor and replacements here are the same as in the integrated editor, but can be safely played around with in here.   
+Any CodeMirror usage in Lively4 can use sandblocks, just by enabling an attribute.
+
+
 
 <script>
   // hack for better loading...
   await (<lively-code-mirror></lively-code-mirror>) // force code mirror loading...
-
-
-//   var buttons = <div>
-//     <button click={async () => {
-//         const editor = await lively.openWorkspace("");
-//         editor.setAttribute("sandblocks", true)  
-//     }}>workspace</button>
-//   </div>
-
-//   buttons
 ""
 </script>
 
