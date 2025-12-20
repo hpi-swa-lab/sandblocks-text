@@ -19,7 +19,10 @@ Any CodeMirror usage in Lively4 can use sandblocks, just by enabling an attribut
 
 <script>
   // hack for better loading...
-  await (<lively-code-mirror></lively-code-mirror>) // force code mirror loading...
+  await (<lively-code-mirror></lively-code-mirror>) 
+  await (<lively-image-editor></lively-image-editor>)
+  await (<lively-crayoncolors></lively-crayoncolors>)
+
 ""
 </script>
 
@@ -189,29 +192,31 @@ const colorstring =  {
         capture("value"),
       ])
   ]),
-  view: ({ type, nodes }) => {
+  view: ({ nodes, replacement }) => {
+    useValidateKeepReplacement(replacement);
     return h("div", {},
           h("div", {
             style: `
-              display: inline-block; 
-              background: ` + nodes[0].text +`; 
-              width: 20px; 
+              display: inline-block;
+              background: ` + nodes[0].text +`;
+              width: 20px;
               position: relative;
               white-space: wrap;
-              height: 20px; 
+              height: 20px;
               border: 1px solid red`,
             onclick: async (evt) => {
+              const node = nodes[0];
               var chooser = await (<lively-crayoncolors></lively-crayoncolors>);
               document.body.appendChild(chooser);
               lively.setClientPosition(chooser, lively.getClientPosition(evt.target))
               chooser.addEventListener("color-choosen", () => {
                 chooser.remove();
-                nodes[0].replaceWith(chooser.value);
+                node.replaceWith(chooser.value);
               });
               chooser.onChooseCustomColor();
-            },        
+            },
           },
-        ), 
+        ),
         h(VitrailPaneWithWhitespace, {nodes: nodes}))
   }
 }
