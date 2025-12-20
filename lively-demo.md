@@ -43,6 +43,7 @@ Any CodeMirror usage in Lively4 can use sandblocks, just by enabling an attribut
   import {setConfig} from "./core/config.js"
 
   import { h } from "./external/preact.mjs";
+  import { useState, useEffect, useMemo } from "./external/preact-hooks.mjs";
 
   var baseDir = lively.query(this, "lively-container").getDir()
   setConfig({baseURL: baseDir + '/'})
@@ -58,8 +59,13 @@ var pane = <div style="border:1px solid "></div>
     
 try {
   
-
-
+window.sbWatch = function(value, id) {
+  sbWatch.registry.get(id)?.(value);
+  return value
+}
+  
+sbWatch.registry = new Map();
+  
 let source = `var x = sbWatch(3 + 4,"id1") + 1
 
 
@@ -106,6 +112,23 @@ const watch = {
     ]),
   view: ({ id, expr, replacement }) => {
     useValidateKeepReplacement(replacement);
+
+    // State to store the last value received
+    const [lastValue, setLastValue] = useState("");
+
+    // Extract the actual id value from the id node
+    const idValue = useMemo(() => {
+      return id.childBlock(0)?.text || id.text.replace(/['"]/g, '');
+    }, [id]);
+
+    // Register callback in the sbWatch registry
+    useEffect(() => {
+      sbWatch.registry.set(idValue, (value) => {
+        setLastValue(String(value));
+      });
+      return () => sbWatch.registry.delete(idValue);
+    }, [idValue]);
+
     return h(
       "span",
       {
@@ -117,6 +140,7 @@ const watch = {
         },
       },
       h(VitrailPaneWithWhitespace, { nodes: [expr] }),
+      h("div", { style: { color: "#fff", marginTop: "2px" } }, lastValue)
     );
   },
 };
