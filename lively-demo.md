@@ -1,16 +1,28 @@
-# Hello CodeMirror!
+# Sandblocks-Text in Lively4
+
+This wiki page can be used to play around with custom replacements. Press the ![](edit-file-icon.png){height=30px} to adapt or create your own editor replacements. This is a playground and is independent of the optional Sandblocks integration into the default Lively4 CodeMirror5 editor, which can be opened via the right-click context menu and then select "Workspace (sandblocks)". 
+
+```javascript
+<lively-code-mirror sandblocks="true"> ...
+```
+<script>
+<button click={async () => {
+  const editor = await lively.openWorkspace("var color = 'rgba(100,10,10,0.5)'");
+  editor.setAttribute("sandblocks", true)              
+}}>Workspace (sandblocks)</button>
+</script>
+
+The editor and replacements here are the same as in the integrated editor, but can be safely played around with in here.   
+Any CodeMirror usage in Lively4 can use sandblocks, just by enabling an attribute.
+
+
 
 <script>
   // hack for better loading...
-  await lively.sleep(1000)
-//   var buttons = <div>
-//     <button click={async () => {
-//         const editor = await lively.openWorkspace("");
-//         editor.setAttribute("sandblocks", true)  
-//     }}>workspace</button>
-//   </div>
+  await (<lively-code-mirror></lively-code-mirror>) 
+  await (<lively-image-editor></lively-image-editor>)
+  await (<lively-crayoncolors></lively-crayoncolors>)
 
-//   buttons
 ""
 </script>
 
@@ -34,22 +46,29 @@
   import {setConfig} from "./core/config.js"
 
   import { h } from "./external/preact.mjs";
+  import { useState, useEffect, useMemo } from "./external/preact-hooks.mjs";
 
   var baseDir = lively.query(this, "lively-container").getDir()
   setConfig({baseURL: baseDir + '/'})
 
   import {addVitrailToLivelyEditor} from './vitrail/lively.js';
 
-  "loaded sandblocks"
+  ""
 </script>
+
 
 <script>
 var pane = <div style="border:1px solid "></div>
     
 try {
   
-
-
+window.sbWatch = function(value, id) {
+  sbWatch.registry.get(id)?.(value);
+  return value
+}
+  
+sbWatch.registry = new Map();
+  
 let source = `var x = sbWatch(3 + 4,"id1") + 1
 
 
@@ -96,6 +115,23 @@ const watch = {
     ]),
   view: ({ id, expr, replacement }) => {
     useValidateKeepReplacement(replacement);
+
+    // State to store the last value received
+    const [lastValue, setLastValue] = useState("");
+
+    // Extract the actual id value from the id node
+    const idValue = useMemo(() => {
+      return id.childBlock(0)?.text || id.text.replace(/['"]/g, '');
+    }, [id]);
+
+    // Register callback in the sbWatch registry
+    useEffect(() => {
+      sbWatch.registry.set(idValue, (value) => {
+        setLastValue(String(value));
+      });
+      return () => sbWatch.registry.delete(idValue);
+    }, [idValue]);
+
     return h(
       "span",
       {
@@ -107,6 +143,7 @@ const watch = {
         },
       },
       h(VitrailPaneWithWhitespace, { nodes: [expr] }),
+      h("div", { style: { color: "#fff", marginTop: "2px" } }, lastValue)
     );
   },
 };
@@ -155,29 +192,31 @@ const colorstring =  {
         capture("value"),
       ])
   ]),
-  view: ({ type, nodes }) => {
+  view: ({ nodes, replacement }) => {
+    useValidateKeepReplacement(replacement);
     return h("div", {},
           h("div", {
             style: `
-              display: inline-block; 
-              background: ` + nodes[0].text +`; 
-              width: 20px; 
+              display: inline-block;
+              background: ` + nodes[0].text +`;
+              width: 20px;
               position: relative;
               white-space: wrap;
-              height: 20px; 
+              height: 20px;
               border: 1px solid red`,
             onclick: async (evt) => {
+              const node = nodes[0];
               var chooser = await (<lively-crayoncolors></lively-crayoncolors>);
               document.body.appendChild(chooser);
               lively.setClientPosition(chooser, lively.getClientPosition(evt.target))
               chooser.addEventListener("color-choosen", () => {
                 chooser.remove();
-                nodes[0].replaceWith(chooser.value);
+                node.replaceWith(chooser.value);
               });
               chooser.onChooseCustomColor();
-            },        
+            },
           },
-        ), 
+        ),
         h(VitrailPaneWithWhitespace, {nodes: nodes}))
   }
 }

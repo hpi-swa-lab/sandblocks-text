@@ -45,6 +45,38 @@ PShard >> adjustLocalIndex: aNumber [
 ]
 
 {
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'ct 12/20/2025 23:11'
+}
+PShard >> allSelectedText [
+
+	^ Text streamContents: [:stream | | myText |
+		(self view text attributesAt: self view selectionInterval start - 1 + 0)
+			detect: [:ea | ea anchoredMorph isKindOf: PReplacementPluggable]
+			ifFound: [:ea | | childShard |
+				childShard := ea anchoredMorph firstSubmorph.
+				stream nextPutAll: childShard allSelectedText].
+		
+		myText := self view text
+			copyFrom: self view selectionInterval start
+			to: self view selectionInterval stop.
+		myText runs withStartStopAndValueDo: [:start :stop :attrs |
+			attrs
+				detect: [:ea | ea anchoredMorph isKindOf: PReplacementPluggable]
+				ifFound: [:ea | | childShard |
+					childShard := ea anchoredMorph firstSubmorph.
+					stream nextPutAll: childShard allSelectedText]
+				ifNone: [
+					stream nextPutAll: (myText copyFrom: start to: stop)]].
+		
+		(self view text attributesAt: self view selectionInterval stop + 1 + 0)
+			detect: [:ea | ea anchoredMorph isKindOf: PReplacementPluggable]
+			ifFound: [:ea | | childShard |
+				childShard := ea anchoredMorph firstSubmorph.
+				stream nextPutAll: childShard allSelectedText]].
+]
+
+{
 	#category : #replacements,
 	#'squeak_changestamp' : 'tobe 4/20/2024 08:17'
 }
@@ -93,6 +125,15 @@ PShard >> basicApplyChanges: aCollection editScript: aScript [
 
 {
 	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'ct 12/20/2025 22:20'
+}
+PShard >> copySelection [
+
+	Clipboard clipboardText: self allSelectedText.
+]
+
+{
+	#category : #'as yet unclassified',
 	#'squeak_changestamp' : 'tobe 4/13/2024 08:10'
 }
 PShard >> editor [
@@ -125,15 +166,26 @@ PShard >> extensions: aBlock [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'ct 12/9/2025 01:57'
+	#'squeak_changestamp' : 'ct 12/20/2025 23:27'
 }
 PShard >> filterEvent: anEvent for: aMorph [
 
 	anEvent isKeystroke ifFalse: [^ anEvent].
 	aMorph hasKeyboardFocus ifFalse: [^ anEvent].
 	
+	(anEvent commandKeyPressed and: [anEvent keyCharacter = $c]) ifTrue: [
+		| containingReplacement |
+		((containingReplacement := self owner) isKindOf: PReplacementPluggable) ifTrue: [
+			| containingTextMorph containingShard |
+			containingTextMorph := containingReplacement owner.
+			containingShard := containingTextMorph owner owner owner.
+			^ containingShard filterEvent: anEvent for: aMorph].
+		self copySelection.
+		^ anEvent wasHandled: true].
+	
 	anEvent wasHandled ifTrue: [ "bubbling"
 		| containingReplacement containingTextMorph |
+		anEvent shiftPressed ifTrue: [^ anEvent].
 		self replacements do: [:ea | | childTextMorph |
 			childTextMorph := ea firstSubmorph view.
 			(aMorph selectionInterval isEmpty and: [childTextMorph selectionInterval notEmpty]) ifTrue: [
@@ -151,31 +203,39 @@ PShard >> filterEvent: anEvent for: aMorph [
 		containingShard := containingTextMorph owner owner owner.
 		anEvent hand newKeyboardFocus: containingTextMorph.
 		index := (containingShard adjustGlobalIndex: containingReplacement range first) - (1 - aMorph selectionInterval start).
-		containingTextMorph selectFrom: index + aMorph selectionInterval notEmpty asBit to: index - 1.
+		aMorph selectFrom: 1 to: (anEvent shiftPressed ifFalse: [0] ifTrue: [aMorph selectionInterval stop]).
+		containingTextMorph selectFrom: ((anEvent shiftPressed and: [containingTextMorph selectionInterval notEmpty]) ifFalse: [index] ifTrue: [containingTextMorph selectionInterval stop + 1]) to: index - 1.
 		^ anEvent wasHandled: true].
 	(anEvent keyCharacter = Character arrowRight and: [aMorph selectionInterval stop >= (aMorph text size - 1)]) ifTrue: [ | containingReplacement containingTextMorph index |
 		((containingReplacement := self owner) isKindOf: PReplacementPluggable) ifFalse: [^ anEvent].
 		containingTextMorph := containingReplacement owner.
 		anEvent hand newKeyboardFocus: containingTextMorph.
 		index := containingReplacement range first + 2.
-		containingTextMorph selectFrom: index - aMorph selectionInterval notEmpty asBit to: index - 1.
+		aMorph selectFrom: (anEvent shiftPressed ifFalse: [aMorph text size] ifTrue: [aMorph selectionInterval start]) to: (anEvent shiftPressed ifFalse: [aMorph text size - 1] ifTrue: [aMorph text size]).
+		containingTextMorph selectFrom: ((anEvent shiftPressed and: [containingTextMorph selectionInterval notEmpty]) ifFalse: [index] ifTrue: [containingTextMorph selectionInterval start]) to: index - 1.
 		^ anEvent wasHandled: true].
 	anEvent keyCharacter = Character arrowLeft ifTrue: [
 		1 to: 0 by: -1 do: [:i |
-			(aMorph text attributesAt: aMorph selectionInterval start - 1 - i)
+			| index |
+			index := aMorph selectionInterval start - 1 - i.
+			(aMorph text attributesAt: index)
 				detect: [:ea | ea anchoredMorph isKindOf: PReplacementPluggable]
 				ifFound: [:ea | | childShard |
 					childShard := ea anchoredMorph firstSubmorph.
 					anEvent hand newKeyboardFocus: childShard view.
+					aMorph selectFrom: (anEvent shiftPressed ifFalse: [index] ifTrue: [aMorph selectionInterval stop + 1]) to: (anEvent shiftPressed ifFalse: [index - 1] ifTrue: [index]).
 					childShard view selectFrom: childShard view text size - (1 - i) + 1 to: childShard view text size - (1 - i).
 					^ anEvent wasHandled: true]]].
 	anEvent keyCharacter = Character arrowRight ifTrue: [
 		1 to: 0 by: -1 do: [:i |
-			(aMorph text attributesAt: aMorph selectionInterval stop + 1 + i)
+			| index |
+			index := aMorph selectionInterval stop + 1 + i.
+			(aMorph text attributesAt: index)
 				detect: [:ea | ea anchoredMorph isKindOf: PReplacementPluggable]
 				ifFound: [:ea | | childShard |
 					childShard := ea anchoredMorph firstSubmorph.
 					anEvent hand newKeyboardFocus: childShard view.
+					aMorph selectFrom: (anEvent shiftPressed ifFalse: [index] ifTrue: [aMorph selectionInterval start]) to: (anEvent shiftPressed ifFalse: [index - 1] ifTrue: [index - 1]).
 					childShard view selectFrom: (1 - i) + 1 to: 1 - i.
 					^ anEvent wasHandled: true]]].
 	

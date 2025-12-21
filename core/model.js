@@ -820,8 +820,8 @@ export class SBNode {
   // edit operations
   replaceWith(str, editOptions) {
     if (typeof str === "number") str = str.toString();
+    const editor = this.editor;
     if (this.language.supportsParentheses(str, this)) {
-      const editor = this.editor;
       const root = this.root;
       const start = this.range[0]
       editor.replaceTextFromCommand(this.range, str, editOptions);
