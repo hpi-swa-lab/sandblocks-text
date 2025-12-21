@@ -46,6 +46,31 @@ PShard >> adjustLocalIndex: aNumber [
 
 {
 	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'ct 12/21/2025 23:09'
+}
+PShard >> allSelectedSourceString [
+
+	^ Text streamContents: [:stream | 
+		(self view text attributesAt: self view selectionInterval start - 1 + 0)
+			detect: [:ea | ea anchoredMorph isKindOf: PReplacementPluggable]
+			ifFound: [:ea | | childShard |
+				childShard := ea anchoredMorph firstSubmorph.
+				stream nextPutAll: childShard allSelectedSourceString].
+		
+		stream nextPutAll:
+			(self editor sourceString
+				copyFrom: (self adjustLocalIndex: self view selectionInterval start)
+				to: (self adjustLocalIndex: self view selectionInterval stop)).
+		
+		(self view text attributesAt: self view selectionInterval stop + 1 + 0)
+			detect: [:ea | ea anchoredMorph isKindOf: PReplacementPluggable]
+			ifFound: [:ea | | childShard |
+				childShard := ea anchoredMorph firstSubmorph.
+				stream nextPutAll: childShard allSelectedSourceString]].
+]
+
+{
+	#category : #'as yet unclassified',
 	#'squeak_changestamp' : 'ct 12/20/2025 23:11'
 }
 PShard >> allSelectedText [
@@ -125,11 +150,14 @@ PShard >> basicApplyChanges: aCollection editScript: aScript [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'ct 12/20/2025 22:20'
+	#'squeak_changestamp' : 'ct 12/22/2025 00:16'
 }
 PShard >> copySelection [
 
-	Clipboard clipboardText: self allSelectedText.
+	| string |
+	string := self allSelectedSourceString.
+	string := string asString copyWithRegex: '(?<=sbWatchWithId\:\s*)\d+\b' matchesTranslatedUsing: [:match | match asNumber hashMultiply asString].
+	Clipboard clipboardText: string.
 ]
 
 {
