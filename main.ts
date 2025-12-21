@@ -141,6 +141,13 @@ identifierA.replaceWith('2 + 3')
 
 stmt.sourceString // we expect: (2 + 3) * 4` }),
 
+    h('h3', {}, 'Wrapping Expressions'),
+    h(LiveEvalEditor, { initialText: `const stmt = languageFor("javascript").parseOffscreen('3 + 4').children[0]
+const op = stmt.children[0]
+op.wrapWith('[', ']')
+
+stmt.sourceString // we expect: [3 + 4]` }),
+
     h('h3', {}, 'Insert Adds Delimiters'),
     h(LiveEvalEditor, { initialText: `const stmt = languageFor("javascript").parseOffscreen('[2, 4, 5]').children[0]
 const array = stmt.children[0]

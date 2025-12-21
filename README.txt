@@ -17,19 +17,19 @@ Since the steps to reproduce our claims are short, we merged the step-by-step in
 
 To reproduce:
 1. Open 2c of "Getting Started".
-2. In the watch example at the top, select from outside the watch to the multiplication sign (`3 +| WATCH *| 4`).
+2. In the watch example at the top, select from outside the watch to the multiplication sign (`3 +| WATCH(2 + 2) *| 4`).
 3. Invoke the Web Browser's cut shortcut (Ctrl/Cmd+x or right-click). The Watch should remain in the text buffer and a notice should appear that there are pending changes.
 4. Navigate to the start of the file (before the 3).
 5. Invoke the Web Browser's paste (Ctrl+Cmd v or right-click). The watch should move to the start and the pending changes notice should disappear.
 6. Insert syntax errors near the watch (e.g., add a `2` just before the watch element) and observe the pending changes notice appearing until the expression is valid again (e.g., add a `+` after the just-inserted `2`).
 
 ## Claim: Section 4.2 --- Nested Editors
-- leading and trailing whitespace handling trims more than one whitespace
+- leading and trailing whitespace characters are trimmed when there is only one whitespace character
 - indentation can be removed
 
 To reproduce leading/trailing whitespace handling:
 1. Open 2c of "Getting Started".
-2. In the "Watch" example, add a space to the right of the `2 + 2` expression, inside the watch, and continue typing `+ 3`.
+2. In the "Watch" example, observe that there is no trailing or leading whitespaces inside the watch. Then add a space to the right of the `2 + 2` expression, inside the watch, and continue typing `+ 3`. Notice that as soon as there is a second space (the one you added inside the watch), it is displayed.
 
 To reproduce indentation removal:
 1. Open 2c of "Getting Started".
