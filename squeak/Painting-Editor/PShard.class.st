@@ -194,10 +194,35 @@ PShard >> extensions: aBlock [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'ct 12/20/2025 23:27'
+	#'squeak_changestamp' : 'ct 12/22/2025 00:14'
 }
 PShard >> filterEvent: anEvent for: aMorph [
 
+	(anEvent isMouse and: [anEvent isMouseMove and: [anEvent isDraggingEvent]]) ifTrue: [
+		anEvent wasHandled ifFalse: [ "capturing"
+			anEvent hand releaseMouseFocus.
+			^ anEvent]].
+	
+	anEvent wasHandled ifTrue: [ "bubbling"
+		| containingReplacement containingTextMorph |
+		((anEvent isKeystroke and: [anEvent shiftPressed]) or: [anEvent isMouse and: [anEvent isDraggingEvent]]) ifFalse: [^ anEvent].
+		self replacements do: [:ea | | childTextMorph |
+			childTextMorph := ea firstSubmorph view.
+			"(aMorph selectionInterval isEmpty and: [childTextMorph selectionInterval notEmpty]) ifTrue: [
+				childTextMorph selectFrom: childTextMorph selectionInterval start to: childTextMorph selectionInterval start - 1].
+			(aMorph selectionInterval notEmpty and: [childTextMorph selectionInterval ~= (1 to: childTextMorph text size)]) ifTrue: [
+				childTextMorph selectFrom: 1 to: childTextMorph text size]."
+			(((self adjustLocalIndex: aMorph selectionInterval start) to: ((self adjustLocalIndex: aMorph selectionInterval stop))) includesAllOf: ((ea firstSubmorph range first + 1) to: (ea firstSubmorph range last))) ifTrue: [
+				childTextMorph selectFrom: 1 to: childTextMorph text size].
+			anEvent isDraggingEvent ifTrue: [
+				(((self adjustLocalIndex: aMorph selectionInterval start) - 1 to: ((self adjustLocalIndex: aMorph selectionInterval stop) + 1)) includesAnyOf: ((ea firstSubmorph range first + 1) to: (ea firstSubmorph range last))) ifFalse: [
+					childTextMorph selectFrom: childTextMorph selectionInterval start to: childTextMorph selectionInterval start - 1]]].
+		((containingReplacement := self owner) isKindOf: PReplacementPluggable) ifFalse: [^ anEvent].
+		containingTextMorph := containingReplacement owner.
+		"(aMorph selectionInterval isEmpty and: [containingTextMorph selectionInterval notEmpty]) ifTrue: [
+			containingTextMorph selectFrom: aMorph selectionInterval start to: aMorph selectionInterval start - 1]."
+		^ anEvent].
+	
 	anEvent isKeystroke ifFalse: [^ anEvent].
 	aMorph hasKeyboardFocus ifFalse: [^ anEvent].
 	
@@ -210,19 +235,6 @@ PShard >> filterEvent: anEvent for: aMorph [
 			^ containingShard filterEvent: anEvent for: aMorph].
 		self copySelection.
 		^ anEvent wasHandled: true].
-	
-	anEvent wasHandled ifTrue: [ "bubbling"
-		| containingReplacement containingTextMorph |
-		anEvent shiftPressed ifTrue: [^ anEvent].
-		self replacements do: [:ea | | childTextMorph |
-			childTextMorph := ea firstSubmorph view.
-			(aMorph selectionInterval isEmpty and: [childTextMorph selectionInterval notEmpty]) ifTrue: [
-				childTextMorph selectFrom: childTextMorph selectionInterval start to: childTextMorph selectionInterval start - 1]].
-		((containingReplacement := self owner) isKindOf: PReplacementPluggable) ifFalse: [^ anEvent].
-		containingTextMorph := containingReplacement owner.
-		(aMorph selectionInterval isEmpty and: [containingTextMorph selectionInterval notEmpty]) ifTrue: [
-			containingTextMorph selectFrom: aMorph selectionInterval start to: aMorph selectionInterval start - 1].
-		^ anEvent].
 	
 	"capturing"
 	(anEvent keyCharacter = Character arrowLeft and: [aMorph selectionInterval start <= 2]) ifTrue: [ | containingReplacement containingTextMorph containingShard index |
@@ -340,7 +352,7 @@ PShard >> findDiff: aString b: anotherString preferredPos: myPreferredPos prefer
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'ct 12/9/2025 00:47'
+	#'squeak_changestamp' : 'ct 12/21/2025 23:15'
 }
 PShard >> initialize [
 
@@ -358,8 +370,10 @@ PShard >> initialize [
 		hResizing: #shrinkWrap;
 		vResizing: #shrinkWrap;
 		yourself.
-	view addKeyboardCaptureFilter: self. 
+	view addKeyboardCaptureFilter: self.
 	view addKeyboardBubbleFilter: self.
+	view addMouseCaptureFilter: self.
+	view addMouseBubbleFilter: self.
 	self
 		addMorph: view;
 		changeTableLayout;
