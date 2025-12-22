@@ -1,4 +1,4 @@
-# Sandblocks-Text in Lively4
+# Hybrid Structured Editing in Lively4
 
 This wiki page can be used to play around with custom replacements. Press the ![](edit-file-icon.png){height=30px} to adapt or create your own editor replacements. This is a playground and is independent of the optional Sandblocks integration into the default Lively4 CodeMirror5 editor, which can be opened via the right-click context menu and then select "Workspace (sandblocks)". 
 
@@ -62,12 +62,14 @@ var pane = <div style="border:1px solid "></div>
     
 try {
   
-window.sbWatch = function(value, id) {
-  sbWatch.registry.get(id)?.(value);
-  return value
+if (!window.sbWatch) {
+  window.sbWatch = function(value, id) {
+    sbWatch.registry.get(id)?.(value);
+    return value
+  }
+
+  sbWatch.registry = new Map();
 }
-  
-sbWatch.registry = new Map();
   
 let source = `var x = sbWatch(3 + 4,"id1") + 1
 
