@@ -208,10 +208,6 @@ PShard >> filterEvent: anEvent for: aMorph [
 		((anEvent isKeystroke and: [anEvent shiftPressed]) or: [anEvent isMouse and: [anEvent isDraggingEvent]]) ifFalse: [^ anEvent].
 		self replacements do: [:ea | | childTextMorph |
 			childTextMorph := ea firstSubmorph view.
-			"(aMorph selectionInterval isEmpty and: [childTextMorph selectionInterval notEmpty]) ifTrue: [
-				childTextMorph selectFrom: childTextMorph selectionInterval start to: childTextMorph selectionInterval start - 1].
-			(aMorph selectionInterval notEmpty and: [childTextMorph selectionInterval ~= (1 to: childTextMorph text size)]) ifTrue: [
-				childTextMorph selectFrom: 1 to: childTextMorph text size]."
 			(((self adjustLocalIndex: aMorph selectionInterval start) to: ((self adjustLocalIndex: aMorph selectionInterval stop))) includesAllOf: ((ea firstSubmorph range first + 1) to: (ea firstSubmorph range last))) ifTrue: [
 				childTextMorph selectFrom: 1 to: childTextMorph text size].
 			anEvent isDraggingEvent ifTrue: [
@@ -219,8 +215,6 @@ PShard >> filterEvent: anEvent for: aMorph [
 					childTextMorph selectFrom: childTextMorph selectionInterval start to: childTextMorph selectionInterval start - 1]]].
 		((containingReplacement := self owner) isKindOf: PReplacementPluggable) ifFalse: [^ anEvent].
 		containingTextMorph := containingReplacement owner.
-		"(aMorph selectionInterval isEmpty and: [containingTextMorph selectionInterval notEmpty]) ifTrue: [
-			containingTextMorph selectFrom: aMorph selectionInterval start to: aMorph selectionInterval start - 1]."
 		^ anEvent].
 	
 	anEvent isKeystroke ifFalse: [^ anEvent].
