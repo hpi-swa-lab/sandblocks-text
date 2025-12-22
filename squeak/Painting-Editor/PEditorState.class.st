@@ -15,7 +15,7 @@ Class {
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 12/22/2025 17:03'
+	#'squeak_changestamp' : 'tobe 12/22/2025 18:07'
 }
 PEditorState class >> example [
 
@@ -67,9 +67,14 @@ PEditorState class >> example [
 		addMorphBack: e rootShard;
 		layoutPolicy: TableLayout new;
 		color: (Color r: 1 g: 1 b: 1);
+		layoutInset: 4;
 		hResizing: #shrinkWrap;
 		vResizing: #shrinkWrap;
-		openInWindow
+		openInWindow.
+	
+	e
+		when: #isPending
+		evaluate: [:is | container color: (is ifTrue: [Color orange] ifFalse: [Color white])]
 ]
 
 {
@@ -247,11 +252,11 @@ PEditorState >> initialize [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 12/22/2025 13:52'
+	#'squeak_changestamp' : 'tobe 12/22/2025 18:06'
 }
 PEditorState >> isPending: aBoolean [
 
-	rootShard color: (aBoolean ifTrue: [Color r: 1 g: 0.6 b: 0.0] ifFalse: [Color white])
+	self triggerEvent: #isPending with: aBoolean
 ]
 
 {
