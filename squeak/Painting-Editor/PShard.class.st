@@ -46,6 +46,31 @@ PShard >> adjustLocalIndex: aNumber [
 
 {
 	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'ct 12/21/2025 23:09'
+}
+PShard >> allSelectedSourceString [
+
+	^ Text streamContents: [:stream | 
+		(self view text attributesAt: self view selectionInterval start - 1 + 0)
+			detect: [:ea | ea anchoredMorph isKindOf: PReplacementPluggable]
+			ifFound: [:ea | | childShard |
+				childShard := ea anchoredMorph firstSubmorph.
+				stream nextPutAll: childShard allSelectedSourceString].
+		
+		stream nextPutAll:
+			(self editor sourceString
+				copyFrom: (self adjustLocalIndex: self view selectionInterval start)
+				to: (self adjustLocalIndex: self view selectionInterval stop)).
+		
+		(self view text attributesAt: self view selectionInterval stop + 1 + 0)
+			detect: [:ea | ea anchoredMorph isKindOf: PReplacementPluggable]
+			ifFound: [:ea | | childShard |
+				childShard := ea anchoredMorph firstSubmorph.
+				stream nextPutAll: childShard allSelectedSourceString]].
+]
+
+{
+	#category : #'as yet unclassified',
 	#'squeak_changestamp' : 'ct 12/20/2025 23:11'
 }
 PShard >> allSelectedText [
@@ -125,11 +150,14 @@ PShard >> basicApplyChanges: aCollection editScript: aScript [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'ct 12/20/2025 22:20'
+	#'squeak_changestamp' : 'ct 12/22/2025 00:16'
 }
 PShard >> copySelection [
 
-	Clipboard clipboardText: self allSelectedText.
+	| string |
+	string := self allSelectedSourceString.
+	string := string asString copyWithRegex: '(?<=sbWatchWithId\:\s*)\d+\b' matchesTranslatedUsing: [:match | match asNumber hashMultiply asString].
+	Clipboard clipboardText: string.
 ]
 
 {
@@ -166,10 +194,29 @@ PShard >> extensions: aBlock [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'ct 12/20/2025 23:27'
+	#'squeak_changestamp' : 'ct 12/22/2025 00:14'
 }
 PShard >> filterEvent: anEvent for: aMorph [
 
+	(anEvent isMouse and: [anEvent isMouseMove and: [anEvent isDraggingEvent]]) ifTrue: [
+		anEvent wasHandled ifFalse: [ "capturing"
+			anEvent hand releaseMouseFocus.
+			^ anEvent]].
+	
+	anEvent wasHandled ifTrue: [ "bubbling"
+		| containingReplacement containingTextMorph |
+		((anEvent isKeystroke and: [anEvent shiftPressed]) or: [anEvent isMouse and: [anEvent isDraggingEvent]]) ifFalse: [^ anEvent].
+		self replacements do: [:ea | | childTextMorph |
+			childTextMorph := ea firstSubmorph view.
+			(((self adjustLocalIndex: aMorph selectionInterval start) to: ((self adjustLocalIndex: aMorph selectionInterval stop))) includesAllOf: ((ea firstSubmorph range first + 1) to: (ea firstSubmorph range last))) ifTrue: [
+				childTextMorph selectFrom: 1 to: childTextMorph text size].
+			anEvent isDraggingEvent ifTrue: [
+				(((self adjustLocalIndex: aMorph selectionInterval start) - 1 to: ((self adjustLocalIndex: aMorph selectionInterval stop) + 1)) includesAnyOf: ((ea firstSubmorph range first + 1) to: (ea firstSubmorph range last))) ifFalse: [
+					childTextMorph selectFrom: childTextMorph selectionInterval start to: childTextMorph selectionInterval start - 1]]].
+		((containingReplacement := self owner) isKindOf: PReplacementPluggable) ifFalse: [^ anEvent].
+		containingTextMorph := containingReplacement owner.
+		^ anEvent].
+	
 	anEvent isKeystroke ifFalse: [^ anEvent].
 	aMorph hasKeyboardFocus ifFalse: [^ anEvent].
 	
@@ -182,19 +229,6 @@ PShard >> filterEvent: anEvent for: aMorph [
 			^ containingShard filterEvent: anEvent for: aMorph].
 		self copySelection.
 		^ anEvent wasHandled: true].
-	
-	anEvent wasHandled ifTrue: [ "bubbling"
-		| containingReplacement containingTextMorph |
-		anEvent shiftPressed ifTrue: [^ anEvent].
-		self replacements do: [:ea | | childTextMorph |
-			childTextMorph := ea firstSubmorph view.
-			(aMorph selectionInterval isEmpty and: [childTextMorph selectionInterval notEmpty]) ifTrue: [
-				childTextMorph selectFrom: childTextMorph selectionInterval start to: childTextMorph selectionInterval start - 1]].
-		((containingReplacement := self owner) isKindOf: PReplacementPluggable) ifFalse: [^ anEvent].
-		containingTextMorph := containingReplacement owner.
-		(aMorph selectionInterval isEmpty and: [containingTextMorph selectionInterval notEmpty]) ifTrue: [
-			containingTextMorph selectFrom: aMorph selectionInterval start to: aMorph selectionInterval start - 1].
-		^ anEvent].
 	
 	"capturing"
 	(anEvent keyCharacter = Character arrowLeft and: [aMorph selectionInterval start <= 2]) ifTrue: [ | containingReplacement containingTextMorph containingShard index |
@@ -312,7 +346,7 @@ PShard >> findDiff: aString b: anotherString preferredPos: myPreferredPos prefer
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'ct 12/9/2025 00:47'
+	#'squeak_changestamp' : 'ct 12/21/2025 23:15'
 }
 PShard >> initialize [
 
@@ -330,8 +364,10 @@ PShard >> initialize [
 		hResizing: #shrinkWrap;
 		vResizing: #shrinkWrap;
 		yourself.
-	view addKeyboardCaptureFilter: self. 
+	view addKeyboardCaptureFilter: self.
 	view addKeyboardBubbleFilter: self.
+	view addMouseCaptureFilter: self.
+	view addMouseBubbleFilter: self.
 	self
 		addMorph: view;
 		changeTableLayout;
@@ -545,11 +581,12 @@ PShard >> updateReplacementsFor: anEditScript root: aRoot [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/17/2024 11:55'
+	#'squeak_changestamp' : 'tobe 12/22/2025 09:44'
 }
 PShard >> updateText [
 
 	| out myRange |
+	(nodes allSatisfy: [:node | node isInTree]) ifFalse: [^ self].
 	out := (self nodes inject: '' into: [:text :node | text, node sourceString]) asText.
 	
 	self editor pendingChanges withIndexDo: [:change :index |
