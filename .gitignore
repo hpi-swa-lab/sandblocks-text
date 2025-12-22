@@ -9,3 +9,4 @@ build
 dist/
 .options/
 dist-demo/
+squeak-demo/SqueakDebug.log
