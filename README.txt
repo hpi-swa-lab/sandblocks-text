@@ -3,7 +3,7 @@
 0. Download [https://drive.google.com/file/d/1sP0rcPHvFErQ3APawO5t8Yj2FA2DIG4O/view?usp=sharing]() (sha56sum: 2403c19313cd029866683ac059d6d3da8476af37a03c65c7ee2446b69e1f9559)
 1. Run `docker image load < hybridse.tar.gz`, then `docker run -p 8080:9005 lively4-artifact`
 2. Open the three platforms (tested on Chrome 142.0.7444.175):
-    a. Open [http://localhost:8080/lively4-core/start.html?load=http://localhost:8080/sandblocks-text-artifact/lively-demo.md]() in a browser. Then, click into the nested URL bar that ends with `live-demo-.md` and press Return to reload the nested page. Now, you should see a file browser-like interface on the left with an editor on the right.
+    a. Open [http://localhost:8080/lively4-core/start.html?load=http://localhost:8080/sandblocks-text-artifact/lively-demo.md]() in a browser. Then, click into the nested URL bar that ends with `/lively-demo.md` and press Return to reload the nested page. Now, you should see a file browser-like interface on the left with an editor on the right.
     b. Open [http://localhost:8080/sandblocks-text-artifact/squeak-demo/squeak.html]() in a browser, which should load a Squeak image and eventually display a small editor widget with a dark gray watch.
     c. Open [http://localhost:8080/sandblocks-text-artifact/dist-demo/index.html]() in a browser, which should show a list of demos.
 
