@@ -15,7 +15,7 @@ Class {
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 12/22/2025 18:07'
+	#'squeak_changestamp' : 'tobe 12/22/2025 18:19'
 }
 PEditorState class >> example [
 
@@ -74,7 +74,7 @@ PEditorState class >> example [
 	
 	e
 		when: #isPending
-		evaluate: [:is | container color: (is ifTrue: [Color orange] ifFalse: [Color white])]
+		evaluate: [:is | container color: (is ifTrue: [Color r: 1 g: 0.6 b: 0.0] ifFalse: [Color r: 1 g: 1 b: 1])]
 ]
 
 {

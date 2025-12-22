@@ -453,7 +453,7 @@ PShard >> nodes: aCollection [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 12/22/2025 17:04'
+	#'squeak_changestamp' : 'tobe 12/22/2025 18:15'
 }
 PShard >> onChange: aNewString [
 
@@ -471,13 +471,13 @@ PShard >> onChange: aNewString [
 				(PChange range: (replacement range last - 1 to: replacement range last) insert: '')
 					sourceShard: self;
 					sideAffinity: ((change at: #from) = 1 ifTrue: [1] ifFalse: [-1])}]
-		ifFalse: [
+		ifFalse: [ | string |
+			string := (change at: #insert ifAbsent: ['']) string.
+			self assert: [(string includes: Character startOfHeader) not].
 			self editor applyChanges: {
 				(PChange
 					range: ((self adjustLocalIndex: (change at: #from) - 1) to: (self adjustLocalIndex: (change at: #to) - 1))
-					insert: (change
-						at: #insert
-						ifAbsent: ['']) string)
+					insert: string)
 					sourceShard: self;
 					sideAffinity: ((self isShowingIndex: (change at: #from) - 1) ifTrue: [-1] ifFalse: [1])}]
 ]

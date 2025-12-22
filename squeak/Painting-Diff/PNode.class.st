@@ -423,9 +423,14 @@ PNode >> baseParent: aNode [
 	baseParent := aNode
 ]
 
-{ #category : #'base accessing' }
+{
+	#category : #'base accessing',
+	#'squeak_changestamp' : 'tobe 12/22/2025 18:18'
+}
 PNode >> baseRemoveFromParent [
 
+	self baseParent ifNil: [^ self].
+	
 	self baseParent baseChildren remove: self.
 	self baseParent: nil
 ]

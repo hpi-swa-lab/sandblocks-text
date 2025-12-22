@@ -12,11 +12,16 @@ Class {
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 12/8/2025 19:32'
+	#'squeak_changestamp' : 'tobe 12/22/2025 18:19'
 }
 PSmalltalkParser class >> parse: aString old: aNode [
 
-	^ PNode parseSt: aString
+	^ [PNode parseSt: aString] on: SyntaxErrorNotification do: [
+		PNode new
+			type: #method;
+			language: self;
+			range: (PRange indexStart: 0 end: aString size);
+			privateSource: aString]
 ]
 
 {

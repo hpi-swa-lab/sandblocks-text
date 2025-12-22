@@ -13,14 +13,14 @@ Class {
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/16/2024 08:57'
+	#'squeak_changestamp' : 'tobe 12/22/2025 18:18'
 }
 PAttachOp >> applyFor: aScript [
 
 	oldParent := node baseParent.
 	oldIndex := oldParent ifNotNil: [node baseSiblingIndex].
 	
-	parent addBaseChild: node at: index
+	parent ifNotNil: [parent addBaseChild: node at: index]
 ]
 
 {
