@@ -581,11 +581,12 @@ PShard >> updateReplacementsFor: anEditScript root: aRoot [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/17/2024 11:55'
+	#'squeak_changestamp' : 'tobe 12/22/2025 09:44'
 }
 PShard >> updateText [
 
 	| out myRange |
+	(nodes allSatisfy: [:node | node isInTree]) ifFalse: [^ self].
 	out := (self nodes inject: '' into: [:text :node | text, node sourceString]) asText.
 	
 	self editor pendingChanges withIndexDo: [:change :index |

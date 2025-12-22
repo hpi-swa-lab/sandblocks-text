@@ -701,6 +701,20 @@ PNode >> isExtra [
 	^ false
 ]
 
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 12/22/2025 09:44'
+}
+PNode >> isInTree [
+
+	| current |
+	current := self.
+	[current isRootBlock] whileFalse: [
+		current := current baseParent.
+		current ifNil: [^ false]].
+	^ true
+]
+
 { #category : #'as yet unclassified' }
 PNode >> isLeafIdentifier [
 
