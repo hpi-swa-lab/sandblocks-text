@@ -45,7 +45,7 @@ To reproduce indentation removal:
 
 ## Claim: Section 5 --- Platform Support
 - Codemirror v6 implementation
-- lively4 implementation
+- lively4 implementation (note that in lively4, code does not run on change but you have to select code and hit cmd/ctrl+d)
 - Squeak/Smalltalk implementation
 
 To reproduce:
