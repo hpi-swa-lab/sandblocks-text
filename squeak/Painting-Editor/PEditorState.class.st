@@ -15,7 +15,7 @@ Class {
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 12/9/2025 07:52'
+	#'squeak_changestamp' : 'tobe 12/22/2025 17:03'
 }
 PEditorState class >> example [
 
@@ -24,6 +24,7 @@ PEditorState class >> example [
 		name: 'test';
 		model: PSmalltalkParser;
 		query: {[:x | x type = #message and: [x baseChildren second contents = '{sbWatchWithId:}']]};
+		validate: [:replacement | (replacement valueOfProperty: #node) isInTree];
 		init: [:node :replacement |
 				replacement color: (Color r: 0.25 g: 0.25 b: 0.25).
 				replacement layoutInset: 1 px.
@@ -34,6 +35,7 @@ PEditorState class >> example [
 						lock;
 						hResizing: #shrinkWrap)]
 			update: [:node :replacement | | watchId updateWatch |
+				replacement setProperty: #node toValue: node.
 				replacement firstSubmorph nodes: {node baseChildren first}.
 				watchId := node baseChildren third contents asInteger.
 				updateWatch := [
@@ -45,20 +47,21 @@ PEditorState class >> example [
 				updateWatch value.
 				PTracer current ifNotNil: [:tracer |
 					tracer when: #traced send: #value to: updateWatch.
+					replacement setProperty: #watchId toValue: watchId.
 					(replacement valueOfProperty: #watchTracerReceivers ifAbsentPut: [Dictionary new])
 						at: watchId
 						put: updateWatch]]
 			delete: [:node :replacement | | watchId |
-				watchId := node baseChildren third contents asInteger.
+				watchId := replacement valueOfProperty: #watchId.
 				(replacement valueOfProperty: #watchTracerReceivers) removeKey: watchId]).
 	
 	e := PEditorState new.
 	e rootShard extensions: [{testExt}].
 	e sourceString: 'test
 
-	3 + ((2 + 8) sbWatchWithId: 1).
-	1 to: 3 do: [:i | ((5
-	+ i) sbWatchWithId: 2)]'.
+	3 + ((2 + 8) sbWatchWithId: 1664525).
+	1 to: 3 do: [:i | 12313432 + i].
+	'.
 	
 	container := Morph new
 		addMorphBack: e rootShard;
@@ -119,20 +122,21 @@ PEditorState >> applyChanges: aCollection [
 
 {
 	#category : #changes,
-	#'squeak_changestamp' : 'ct 12/9/2025 02:15'
+	#'squeak_changestamp' : 'tobe 12/22/2025 17:08'
 }
 PEditorState >> applyChanges: aCollection force: aBoolean [
 
 	| newSourceString pair oldSourceString editScripts oldModels |
-	newSourceString := aCollection, pendingChanges
-		inject: self sourceString
+	newSourceString := (aCollection, pendingChanges) reversed
+		inject: sourceString
 		into: [:new :change | change applyTo: new].
 	oldSourceString := sourceString.
 	oldModels := models copy.
 	
 	editScripts := oldModels collect: [:oldRoot | | newRoot |
 		newRoot := [oldRoot language parse: newSourceString old: oldRoot]
-			on: SyntaxErrorNotification do: [^ false].
+			on: SyntaxErrorNotification
+			do: [^ false].
 		
 		pair := PTrueDiff new compare: oldRoot to: newRoot.
 		pair first privateSource: newSourceString.
@@ -140,19 +144,20 @@ PEditorState >> applyChanges: aCollection force: aBoolean [
 		pair second].
 	
 	aBoolean ifFalse: [
-		validationBlocks do: [:b |
-			(b value value: (models at: b key) value: aCollection value: (editScripts at: b key)) ifFalse: [
-				models := oldModels.
-				editScripts do: [:script | script undo].
-				models do: [:root | root privateSource: oldSourceString].
-				pendingChanges addAll: aCollection.
-				pendingChangesRevert addAll: (aCollection collect: [:change |
-					PChange
-						range: (change from to: change from + change insert size)
-						insert: (self sourceString copyFrom: change from + 1 to: change to)]).
-				self shards do: [:shard | shard applyRejectedChanges: aCollection].
-				^ false]]].
+		(self checkValidation: editScripts changes: aCollection) ifFalse: [
+			models := oldModels.
+			editScripts do: [:script | script undo].
+			models do: [:root | root privateSource: oldSourceString].
+			pendingChanges addAll: aCollection.
+			pendingChangesRevert addAll: (aCollection collect: [:change |
+				PChange
+					range: (change from to: change from + change insert size)
+					insert: (self sourceString copyFrom: change from + 1 to: change to)]).
+			self shards do: [:shard | shard applyRejectedChanges: aCollection].
+			self isPending: true.
+			^ false]].
 	
+	self isPending: false.
 	pendingChanges := OrderedCollection new.
 	self basicSourceString: newSourceString.
 	
@@ -181,6 +186,17 @@ PEditorState >> applyPendingChanges [
 PEditorState >> basicSourceString: aString [
 
 	sourceString := aString
+]
+
+{
+	#category : #changes,
+	#'squeak_changestamp' : 'tobe 12/22/2025 13:50'
+}
+PEditorState >> checkValidation: editScripts changes: aCollection [
+
+	validationBlocks do: [:b | (b value value: (models at: b key) value: aCollection value: (editScripts at: b key)) ifFalse: [^ false]].
+	shards do: [:shard | shard replacements do: [:r | r definition validate ifNotNil: [(r definition validate value: r) ifFalse: [^ false]]]].
+	^ true
 ]
 
 {
@@ -227,6 +243,15 @@ PEditorState >> initialize [
 	models := Dictionary new
 		at: PBaseParser put: nil;
 		yourself
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 12/22/2025 13:52'
+}
+PEditorState >> isPending: aBoolean [
+
+	rootShard color: (aBoolean ifTrue: [Color r: 1 g: 0.6 b: 0.0] ifFalse: [Color white])
 ]
 
 {

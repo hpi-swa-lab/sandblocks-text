@@ -8,7 +8,8 @@ Class {
 		'deletionInteraction',
 		'replacementClass',
 		'buildReplacement',
-		'model'
+		'model',
+		'validate'
 	],
 	#category : #'Painting-Editor'
 }
@@ -149,4 +150,22 @@ PReplacementDefinition >> selectionInteraction: aSymbol [
 PReplacementDefinition >> selectionInteractive [
 
 	^ selectionInteraction
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 12/22/2025 13:46'
+}
+PReplacementDefinition >> validate [
+
+	^ validate
+]
+
+{
+	#category : #'as yet unclassified',
+	#'squeak_changestamp' : 'tobe 12/22/2025 13:46'
+}
+PReplacementDefinition >> validate: aBlock [
+
+	validate := aBlock
 ]

@@ -135,29 +135,33 @@ PShard >> applyRejectedChanges: aCollection [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/15/2024 16:17'
+	#'squeak_changestamp' : 'tobe 12/22/2025 16:55'
 }
 PShard >> basicApplyChanges: aCollection editScript: aScript [
 
-	self halt.
 	(aCollection reject: [:change | change sourceShard = self]) do: [:change |
 		view handleEdit: [
 			view
-				selectInvisiblyFrom: (self adjustGlobalIndex: change from) + 1
-					to: (self adjustGlobalIndex: change to);
+				selectInvisiblyFrom: (self adjustGlobalIndex: change from) + 1 to: (self adjustGlobalIndex: change to);
 				replaceSelectionWith: (change insert ifNil: [''])]]
 ]
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'ct 12/22/2025 00:16'
+	#'squeak_changestamp' : 'tobe 12/22/2025 17:05'
 }
-PShard >> copySelection [
+PShard >> copySelection: doCut [
 
 	| string |
 	string := self allSelectedSourceString.
-	string := string asString copyWithRegex: '(?<=sbWatchWithId\:\s*)\d+\b' matchesTranslatedUsing: [:match | match asNumber hashMultiply asString].
+	doCut ifFalse: [
+		string := string asString
+			copyWithRegex: '(?<=sbWatchWithId\:\s*)\d+\b'
+			matchesTranslatedUsing: [:match | match asNumber hashMultiply asString]].
 	Clipboard clipboardText: string.
+	doCut ifTrue: [
+		view replaceSelectionWith: view textMorph editor nullText.
+		view textEdited: view text]
 ]
 
 {
@@ -194,7 +198,7 @@ PShard >> extensions: aBlock [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'ct 12/22/2025 00:14'
+	#'squeak_changestamp' : 'tobe 12/22/2025 16:53'
 }
 PShard >> filterEvent: anEvent for: aMorph [
 
@@ -220,14 +224,14 @@ PShard >> filterEvent: anEvent for: aMorph [
 	anEvent isKeystroke ifFalse: [^ anEvent].
 	aMorph hasKeyboardFocus ifFalse: [^ anEvent].
 	
-	(anEvent commandKeyPressed and: [anEvent keyCharacter = $c]) ifTrue: [
+	(anEvent commandKeyPressed and: [#($c $x) includes: anEvent keyCharacter]) ifTrue: [
 		| containingReplacement |
 		((containingReplacement := self owner) isKindOf: PReplacementPluggable) ifTrue: [
 			| containingTextMorph containingShard |
 			containingTextMorph := containingReplacement owner.
 			containingShard := containingTextMorph owner owner owner.
 			^ containingShard filterEvent: anEvent for: aMorph].
-		self copySelection.
+		self copySelection: anEvent keyCharacter = $x.
 		^ anEvent wasHandled: true].
 	
 	"capturing"
@@ -449,7 +453,7 @@ PShard >> nodes: aCollection [
 
 {
 	#category : #'as yet unclassified',
-	#'squeak_changestamp' : 'tobe 4/19/2024 21:01'
+	#'squeak_changestamp' : 'tobe 12/22/2025 17:04'
 }
 PShard >> onChange: aNewString [
 
@@ -471,11 +475,11 @@ PShard >> onChange: aNewString [
 			self editor applyChanges: {
 				(PChange
 					range: ((self adjustLocalIndex: (change at: #from) - 1) to: (self adjustLocalIndex: (change at: #to) - 1))
-					insert: (change at: #insert ifAbsent: ['']) string)
+					insert: (change
+						at: #insert
+						ifAbsent: ['']) string)
 					sourceShard: self;
-					sideAffinity: ((self isShowingIndex: (change at: #from) - 1)
-						ifTrue: [-1]
-						ifFalse: [1])}]
+					sideAffinity: ((self isShowingIndex: (change at: #from) - 1) ifTrue: [-1] ifFalse: [1])}]
 ]
 
 {
@@ -537,23 +541,26 @@ PShard >> styleRemove: aMarker [
 
 {
 	#category : #replacements,
-	#'squeak_changestamp' : 'tobe 4/20/2024 08:14'
+	#'squeak_changestamp' : 'tobe 12/22/2025 13:24'
 }
 PShard >> uninstallReplacement: aReplacement [
 
 	aReplacement beforeUninstall.
 	
-	replacements remove: aReplacement
+	replacements remove: aReplacement.
+	
+	aReplacement delete
 ]
 
 {
 	#category : #replacements,
-	#'squeak_changestamp' : 'tobe 12/8/2025 20:15'
+	#'squeak_changestamp' : 'tobe 12/22/2025 13:39'
 }
 PShard >> updateReplacementsFor: anEditScript root: aRoot [
 
 	anEditScript removeDo: [:op |
-		self replacements detect: [:r | op node = r node] ifFound: [:r | self uninstallReplacement: r].
+		self replacements detect: [:r | op node = r node] ifFound: [:r |
+			self uninstallReplacement: r].
 		attributes do: [:attr | op node = attr node ifTrue: [attr definition detach value: self value: op node value: attr]]].
 	
 	extensions value do: [:ext |
