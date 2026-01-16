@@ -347,7 +347,7 @@ PEditorState >> sourceString [
 
 {
 	#category : #accessing,
-	#'squeak_changestamp' : 'tobe 9/26/2024 13:24'
+	#'squeak_changestamp' : 'ct 1/16/2026 17:51'
 }
 PEditorState >> sourceString: aString [
 
@@ -357,6 +357,7 @@ PEditorState >> sourceString: aString [
 		collect: [:model | model -> (model parse: aString old: nil)]
 		as: Dictionary.
 	rootShard nodes: {models at: PBaseParser}.
+	self applyPendingChanges.
 	
 	
 ]
