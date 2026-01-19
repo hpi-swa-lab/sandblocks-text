@@ -29,7 +29,7 @@ To reproduce:
 
 To reproduce leading/trailing whitespace handling:
 1. Open 2c of "Getting Started".
-2. In the "Watch" example, observe that there is no trailing or leading whitespaces inside the watch. Then add a space to the right of the `2 + 2` expression, inside the watch, and continue typing `+ 3`. Notice that as soon as there is a second space (the one you added inside the watch), it is displayed.
+2. In the "Watch" example, observe that there is no trailing or leading whitespaces inside the watch. Then add a space to the right of the `2 + 2` expression, inside the watch, and continue typing `+ 3`. Notice that as soon as there is a second space (the one you added inside the watch), it is displayed. (Note that when adding a space on the left edge of the watch's expression, two spaces will appear -- the second space is pulled in from the outer expression, as the heuristic only omits single trailing or leading spaces.)
 
 To reproduce indentation removal:
 1. Open 2c of "Getting Started".
