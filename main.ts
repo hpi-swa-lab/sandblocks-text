@@ -16,6 +16,7 @@ import { invisibleWatchRewrite, watch } from "./vitrail/tools/watch.ts";
 import { languageFor } from "./core/languages.js";
 import { placeholder } from "./vitrail/tools/placeholder.ts";
 import { sql } from "./vitrail/tools/sql.ts";
+import { babylonian } from "./vitrail/tools/babylonian.ts";
 import { color, slider } from "./vitrail/tools/livelits.ts";
 import { safeEval } from "./utils.js";
 import { Browser } from "./vitrail/tools/browser.ts";
@@ -25,6 +26,7 @@ const jsAugmentations = [
   watch(languageFor("javascript")),
   placeholder(languageFor("javascript")),
   sql(languageFor("javascript")),
+  babylonian(languageFor("javascript")),
   slider(languageFor("javascript")),
   color(languageFor("javascript")),
 ];
@@ -42,7 +44,15 @@ function Demo() {
     "db.execute(sql`SELECT \\`name\\` FROM \\`users\\``);",
   );
 
-  const watchValue = useSignal('3 + ["sbWatch", 2 + 2][1] * 4');
+  const watchValue = useSignal(`function process(string) {
+  () => ({ sbExample: 'example', args: ["2,3,4"], self: null })
+
+  if (true) {
+    console.log(["sbWatch", string
+        .split(",")
+        .join(";")][1])
+  }
+}`);
   const watchEditor = useSignal(null);
   useSignalEffect(() => {
     // TODO not rewritten yet on startup

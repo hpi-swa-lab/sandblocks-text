@@ -1,6 +1,6 @@
 # Getting Started
 
-0. Download [https://drive.google.com/file/d/1sP0rcPHvFErQ3APawO5t8Yj2FA2DIG4O/view?usp=sharing]() (sha256sum: 6c5fa2182fa093d3ff927a70243a4ca32169192e2b9086f2201d81918fccc6db)
+0. Download [https://drive.google.com/file/d/1sP0rcPHvFErQ3APawO5t8Yj2FA2DIG4O/view?usp=sharing]() (sha256sum: 78caf9f4c0dc9f3c0a70ad171ef45fc3572ed6869afb51b099384ffc433d2994)
 1. Run `docker image load < hybridse.tar.gz`, then `docker run -p 8080:9005 lively4-artifact`
 2. Open the three platforms (tested on Chrome 142.0.7444.175):
     a. Open [http://localhost:8080/lively4-core/start.html?load=http://localhost:8080/sandblocks-text-artifact/lively-demo.md]() in a browser. Then, click into the nested URL bar that ends with `/lively-demo.md` and press Return to reload the nested page. Now, you should see a file browser-like interface on the left with an editor on the right.

@@ -14,6 +14,7 @@ import {
 } from "../vitrail.ts";
 import { SBNode } from "../../core/model.js";
 import { languageFor } from "../../core/languages.js";
+import { removeCommonIndent } from "./whitespace.ts";
 
 export const watch = (model) => ({
   type: "replace" as const,
@@ -35,6 +36,7 @@ export const watch = (model) => ({
       setLastValue(objectToString(value));
     });
     useValidateKeepReplacement(replacement);
+    const augs = useMemo(() => [removeCommonIndent(expressions)], expressions);
 
     return html`<div
       style=${{
@@ -47,6 +49,7 @@ export const watch = (model) => ({
     >
       <${VitrailPane}
         nodes=${expressions}
+        fetchAugmentations=${() => augs}
         style=${{
           padding: "0.1rem",
           background: "#fff",
