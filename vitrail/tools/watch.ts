@@ -35,7 +35,7 @@ export const watch = (model) => ({
       setCount((c) => c + 1);
       setLastValue(objectToString(value));
     });
-    useValidateKeepReplacement(replacement);
+    // useValidateKeepReplacement(replacement);
     const augs = useMemo(() => [removeCommonIndent(expressions)], expressions);
 
     return html`<div
@@ -57,6 +57,7 @@ export const watch = (model) => ({
         }}
       />
       <div style=${{ color: "#fff", display: "flex", marginTop: "0.25rem" }}>
+        <span style="padding: 0 0.5rem; background: #fff; color: #000; border-radius: 1rem; margin-right: 0.5rem;">${count}</span>
         ${lastValue}
       </div>
     </div>`;

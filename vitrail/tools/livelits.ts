@@ -97,8 +97,22 @@ export const color = (model) =>
           value: `#${[red, green, blue]
             .map((v) => v.value.toString(16).padStart(2, "0"))
             .join("")}`,
-          // oninput: (e) => value.replaceWith(e.target.value),
+            oninput: (e) => {
+              const { r: rv, g: gv, b: bv } = hexToRgb(e.target.value);
+              r[0].replaceWith(rv)
+              g[0].replaceWith(gv)
+              b[0].replaceWith(bv)
+            }
         }),
       );
     },
   };
+
+function hexToRgb(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}

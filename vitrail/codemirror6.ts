@@ -122,7 +122,7 @@ function buildPendingChangesHint(v: Vitrail<EditorView>, box: HTMLElement) {
     top: -2rem;
     left: 0px;
     z-index: 9999;
-    background: #333;
+    background: #e66;
     color: #fff;
     padding: 0.3rem;
     font-family: sans-serif;
@@ -132,7 +132,8 @@ function buildPendingChangesHint(v: Vitrail<EditorView>, box: HTMLElement) {
     h(
       "span",
       {},
-      "Pending changes ",
+      "Text conflicts with embedded tools.",
+      " ",
       h("button", { onClick: () => v.revertPendingChanges() }, "Revert"),
       h("button", { onClick: () => v.applyPendingChanges() }, "Apply"),
     ),

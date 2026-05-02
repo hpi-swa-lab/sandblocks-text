@@ -121,8 +121,8 @@ export const babylonian = (model) =>
       const counter = useSignal(0);
       useValidateKeepNodes([args, self]);
 
-      const selected = useSelectedNode()?.orParentThat((it) => it.isExpression);
-      useRuntimeValues(selected, console.log);
+      // const selected = useSelectedNode()?.orParentThat((it) => it.isExpression);
+      // useRuntimeValues(selected, console.log);
 
       useDebouncedEffect(
         500,
@@ -137,7 +137,7 @@ export const babylonian = (model) =>
             }
           }
         },
-        [counter.value, selected],
+        [counter.value],
       );
 
       useOnChange(() => counter.value++);
